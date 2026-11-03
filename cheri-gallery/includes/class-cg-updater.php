@@ -46,13 +46,84 @@ class CG_Updater {
 	/**
 	 * The latest release, cached for 6 hours.
 	 *
-	 * @return array|WP_Error version, notes, published, package (asset API URL), download (browser URL), url.
+	 * Without a token it uses GitHub's ordinary download links, which aren't rate-limited like the
+	 * API (shared web hosts often use up the API's 60-an-hour allowance, giving "403").
+	 *
+	 * @return array|WP_Error version, notes, published, package (zip URL), url.
 	 */
 	public static function latest( $force = false ) {
 		$cached = get_site_transient( self::CACHE );
 		if ( ! $force && is_array( $cached ) ) {
 			return $cached;
 		}
+		$token   = trim( (string) get_option( self::TOKEN_OPT, '' ) );
+		$release = $token ? self::from_api() : self::from_web();
+		if ( is_wp_error( $release ) ) {
+			$other = $token ? self::from_web() : self::from_api();
+			if ( ! is_wp_error( $other ) ) {
+				$release = $other;
+			}
+		}
+		if ( is_wp_error( $release ) ) {
+			return $release;
+		}
+		$release['checked'] = time();
+		set_site_transient( self::CACHE, $release, 6 * HOUR_IN_SECONDS );
+		return $release;
+	}
+
+	/**
+	 * From the release's release.json (a stable "latest" download link), or failing that the
+	 * address GitHub's "latest release" page redirects to.
+	 */
+	private static function from_web() {
+		$base = 'https://github.com/' . self::REPO . '/releases';
+		$args = array(
+			'timeout' => 15,
+			'headers' => array(
+				'User-Agent'    => 'Cheri-Gallery-Updater',
+				'Cache-Control' => 'no-cache',
+			),
+		);
+
+		$res = wp_remote_get( $base . '/latest/download/release.json?nocache=' . time(), $args );
+		if ( ! is_wp_error( $res ) && 200 === wp_remote_retrieve_response_code( $res ) ) {
+			$data = json_decode( wp_remote_retrieve_body( $res ), true );
+			if ( is_array( $data ) && ! empty( $data['version'] ) ) {
+				$version = ltrim( (string) $data['version'], 'vV' );
+				return array(
+					'version'   => $version,
+					'notes'     => (string) ( $data['notes'] ?? '' ),
+					'published' => (string) ( $data['published'] ?? '' ),
+					'package'   => $base . '/download/v' . rawurlencode( $version ) . '/' . self::ASSET,
+					'url'       => $base . '/tag/v' . rawurlencode( $version ),
+				);
+			}
+		}
+
+		// Older releases have no release.json: read the version from where /releases/latest points.
+		$res = wp_remote_get( $base . '/latest', array_merge( $args, array( 'redirection' => 0 ) ) );
+		if ( is_wp_error( $res ) ) {
+			/* translators: %s: error */
+			return new WP_Error( 'cg_github', sprintf( __( 'Your website couldn\'t reach GitHub: %s', 'cheri-gallery' ), $res->get_error_message() ) );
+		}
+		$location = (string) wp_remote_retrieve_header( $res, 'location' );
+		if ( ! preg_match( '#/releases/tag/v?([0-9][0-9A-Za-z.\-]*)$#', $location, $m ) ) {
+			return new WP_Error( 'cg_no_release', __( 'Couldn\'t find a published release on GitHub.', 'cheri-gallery' ) );
+		}
+		return array(
+			'version'   => $m[1],
+			'notes'     => '',
+			'published' => '',
+			'package'   => $base . '/download/v' . rawurlencode( $m[1] ) . '/' . self::ASSET,
+			'url'       => $location,
+		);
+	}
+
+	/**
+	 * From the GitHub API (used with a token, or when the plain links fail).
+	 */
+	private static function from_api() {
 		$res = wp_remote_get(
 			'https://api.github.com/repos/' . self::REPO . '/releases/latest?nocache=' . time(),
 			array(
@@ -94,11 +165,12 @@ class CG_Updater {
 			'notes'     => (string) ( $data['body'] ?? '' ),
 			'published' => (string) ( $data['published_at'] ?? '' ),
 			'package'   => (string) $asset['url'],
-			'download'  => (string) $asset['browser_download_url'],
 			'url'       => (string) ( $data['html_url'] ?? 'https://github.com/' . self::REPO . '/releases' ),
 		);
-		$release['checked'] = time();
-		set_site_transient( self::CACHE, $release, 6 * HOUR_IN_SECONDS );
+		// Without a token the public download link avoids the API entirely.
+		if ( ! trim( (string) get_option( self::TOKEN_OPT, '' ) ) ) {
+			$release['package'] = (string) $asset['browser_download_url'];
+		}
 		return $release;
 	}
 

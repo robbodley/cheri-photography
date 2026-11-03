@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.3.2
+
+- Fixes "GitHub answered with status 403" when checking for updates. Shared web hosts often use up GitHub's 60-requests-an-hour limit for its API, so update checks and downloads now use GitHub's ordinary download links instead.
+
 ## 0.3.1
 
 - Settings → Updates now has an "Update to … now" button that installs a new version straight away (checking for updates only looks).

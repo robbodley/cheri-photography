@@ -66,13 +66,26 @@ jobs:
           if [ ! -s notes.md ]; then git log -1 --format=%B > notes.md; fi
           cat notes.md
 
+      - name: Build release.json (what sites read to find updates, without the rate-limited API)
+        if: steps.exists.outputs.skip != 'true'
+        run: |
+          python3 - <<'PY'
+          import json, datetime
+          json.dump({
+              "version": "${{ steps.version.outputs.version }}",
+              "notes": open("notes.md").read().strip(),
+              "published": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+          }, open("release.json", "w"))
+          PY
+          cat release.json
+
       - name: Publish the release
         if: steps.exists.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           v="${{ steps.version.outputs.version }}"
-          gh release create "v$v" cheri-gallery.zip \
+          gh release create "v$v" cheri-gallery.zip release.json \
             --target "$GITHUB_SHA" \
             --title "Cheri Gallery $v" \
             --notes-file notes.md \
