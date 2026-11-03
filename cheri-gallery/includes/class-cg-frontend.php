@@ -16,7 +16,8 @@ class CG_Frontend {
 	public static function init() {
 		add_action( 'template_redirect', array( __CLASS__, 'handle_gallery_request' ), 5 );
 		add_filter( 'template_include', array( __CLASS__, 'template' ), 99 );
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ), 5 );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_own_page' ), 100 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'isolate_styles' ), 9999 );
 		add_filter( 'wp_robots', array( __CLASS__, 'robots' ) );
 		add_shortcode( 'cheri_galleries', array( __CLASS__, 'shortcode' ) );
@@ -27,13 +28,28 @@ class CG_Frontend {
 	 */
 	public static function own_page() {
 		self::$own_page = true;
-		wp_enqueue_style( 'cg-gallery' );
+	}
+
+	/**
+	 * Use the website's header and footer around gallery pages (Settings; on by default).
+	 */
+	public static function use_theme_layout() {
+		return (bool) apply_filters( 'cg_use_theme_layout', (bool) CG_Settings::get( 'theme_layout' ) );
+	}
+
+	/**
+	 * Load the gallery styles after the theme's, so they win where both style the same thing.
+	 */
+	public static function enqueue_own_page() {
+		if ( self::$own_page ) {
+			wp_enqueue_style( 'cg-gallery' );
+		}
 	}
 
 	public static function register_assets() {
 		wp_register_style( 'cg-fonts', 'https://fonts.googleapis.com/css2?family=Marcellus&family=Open+Sans:wght@400;600&display=swap', array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
-		wp_register_style( 'cg-components', CG_URL . 'assets/css/components.css', array( 'cg-fonts' ), CG_VERSION );
-		wp_register_style( 'cg-gallery', CG_URL . 'assets/css/gallery.css', array( 'cg-components' ), CG_VERSION );
+		// front.css = components.css + gallery.css, scoped under .cg-page (tools/build-front-css.py).
+		wp_register_style( 'cg-gallery', CG_URL . 'assets/css/front.css', array( 'cg-fonts' ), CG_VERSION );
 		wp_register_script( 'cg-gallery', CG_URL . 'assets/js/gallery.js', array(), CG_VERSION, true );
 	}
 
@@ -42,10 +58,10 @@ class CG_Frontend {
 	 * whatever the theme does. Scripts (analytics etc.) are left alone.
 	 */
 	public static function isolate_styles() {
-		if ( ! self::$own_page ) {
+		if ( ! self::$own_page || self::use_theme_layout() ) {
 			return;
 		}
-		$keep = apply_filters( 'cg_keep_styles', array( 'cg-fonts', 'cg-components', 'cg-gallery', 'admin-bar', 'dashicons' ) );
+		$keep = apply_filters( 'cg_keep_styles', array( 'cg-fonts', 'cg-gallery', 'admin-bar', 'dashicons' ) );
 		foreach ( wp_styles()->queue as $handle ) {
 			if ( ! in_array( $handle, $keep, true ) ) {
 				wp_dequeue_style( $handle );
@@ -172,6 +188,7 @@ class CG_Frontend {
 				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
 				'nonce'        => wp_create_nonce( 'cg_fav_' . $gid ),
 				'canFavourite' => (bool) $view['can_favourite'],
+				'signInForFav' => (bool) $view['sign_in_for_fav'],
 				'loginUrl'     => $view['login_url'],
 				'protect'      => (bool) $view['settings']['protect'],
 				'shareUrl'     => get_permalink( $gid ),
@@ -203,6 +220,12 @@ class CG_Frontend {
 					'slideshow'   => __( 'Slideshow', 'cheri-gallery' ),
 					'previous'    => __( 'Previous photo', 'cheri-gallery' ),
 					'next'        => __( 'Next photo', 'cheri-gallery' ),
+					'prevShort'   => __( 'Previous', 'cheri-gallery' ),
+					'nextShort'   => __( 'Next', 'cheri-gallery' ),
+					'back'        => __( 'Back to gallery', 'cheri-gallery' ),
+					'favourited'  => __( 'Favourited', 'cheri-gallery' ),
+					'signInFav'   => __( 'Sign in to favourite', 'cheri-gallery' ),
+					'pause'       => __( 'Pause', 'cheri-gallery' ),
 				),
 			)
 		);
@@ -245,7 +268,7 @@ class CG_Frontend {
 				break;
 			}
 		}
-		return cg_render( 'parts/album-grid.php', array( 'galleries' => $cards ) );
+		return '<div class="cg-page cg-embed">' . cg_render( 'parts/album-grid.php', array( 'galleries' => $cards ) ) . '</div>';
 	}
 
 	/**

@@ -2,6 +2,14 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.3.0
+
+- Gallery, sign-in and My galleries pages now sit inside your website's own header and footer (menu, logo and footer from your theme). You can switch back to standalone pages under Cheri Gallery → Settings → Pages.
+- Clearer controls when a photo is enlarged: a labelled bar with Previous, Favourite, Download, Slideshow and Next, large arrows either side, and a Back to gallery button. They all work on phones too.
+- The phone's or browser's Back button now returns to the gallery instead of leaving the page.
+- Signed-out visitors see "Sign in to favourite" on enlarged photos.
+- The gallery keeps its own look even where the theme styles buttons, links, headings and images differently.
+
 ## 0.2.0
 
 First release of Cheri Gallery.

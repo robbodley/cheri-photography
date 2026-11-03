@@ -22,6 +22,7 @@ class CG_Settings {
 			'jpeg_quality'      => 86,
 			'default_watermark' => 'off',
 			'gallery_base'      => 'gallery',
+			'theme_layout'      => 1,
 			'templates'         => self::default_templates(),
 		);
 	}

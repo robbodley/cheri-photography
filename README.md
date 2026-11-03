@@ -55,6 +55,10 @@ The plugin updates itself from this repository's GitHub Releases, like any plugi
 | `/my-galleries/` | A signed-in client's galleries and favourites |
 | `[cheri_galleries]` | Shortcode listing galleries marked "Show on the galleries page" (`type="portrait"` to filter) |
 
+## Look and layout
+
+Gallery, sign-in and My galleries pages use your website's own header and footer by default (Settings → Pages → "Use the website's header and footer"). All gallery styles are scoped under a `.cg-page` wrapper and load after the theme's, so theme button and heading styles don't change the gallery. The stylesheet the site loads, `assets/css/front.css`, is generated from `components.css` + `gallery.css`: after editing those, run `python3 tools/build-front-css.py`.
+
 ## How the protection works
 
 - Photos are stored in `wp-content/uploads/cheri-gallery/` under random file names, with an `.htaccess` that blocks direct access. Every photo and download goes through WordPress, which checks the gallery's visibility, the client's sign-in and the download switches first.

@@ -33,6 +33,8 @@
 	/* ---------------------------------------------------------------- */
 	/* Toast                                                             */
 	/* ---------------------------------------------------------------- */
+	var root = document.getElementById('cg-root') || document.body;
+
 	var toastEl = $('[data-cg-toast]');
 	var toastTimer;
 	function toast(msg) {
@@ -57,7 +59,7 @@
 		}
 	}
 	if (tabs.length > 1) {
-		document.body.classList.add('js-cg-tabs');
+		root.classList.add('js-cg-tabs');
 		tabs.forEach(function (t) {
 			t.addEventListener('click', function (e) {
 				e.preventDefault();
@@ -273,8 +275,8 @@
 				el('div', { 'class': 'ch-drawer__body' }),
 				el('div', { 'class': 'ch-drawer__foot' })
 			]);
-			document.body.appendChild(drawerBack);
-			document.body.appendChild(drawer);
+			root.appendChild(drawerBack);
+			root.appendChild(drawer);
 		}
 		drawerRender();
 		drawerBack.hidden = false;
@@ -302,36 +304,59 @@
 	/* ---------------------------------------------------------------- */
 	/* Lightbox and slideshow                                            */
 	/* ---------------------------------------------------------------- */
-	var lb, lbImg, lbCount, lbName, lbHeart, lbDl, lbPlay, lbItems = [], lbIndex = 0, lbTimer = null, lastFocus;
+	var lb, lbImg, lbCount, lbName, lbHeart, lbHeartLabel, lbDl, lbPlay, lbPlayLabel;
+	var lbItems = [], lbIndex = 0, lbTimer = null, lastFocus, lbPushed = false;
+
+	// A control with an icon and a visible label.
+	function lbButton(icon, label, onclick, extraClass) {
+		var text = el('span', { text: label });
+		var b = el('button', { type: 'button', 'class': 'ch-lb__btn' + (extraClass ? ' ' + extraClass : ''), html: ICON[icon], onclick: onclick }, [text]);
+		b.cgLabel = text;
+		return b;
+	}
 
 	function buildLightbox() {
 		lbImg = el('img', { 'class': 'ch-lb__img', alt: '' });
 		lbCount = el('span', { 'class': 'ch-lb__count' });
-		lbName = el('div', { 'class': 'ch-lb__name' });
-		lbHeart = CFG.canFavourite ? el('button', { type: 'button', 'class': 'ch-lb__btn', 'aria-label': T.favourite, 'aria-pressed': 'false', html: ICON.heart, onclick: function () {
-			toggleHeart(parseInt(lbItems[lbIndex].getAttribute('data-cg-photo'), 10));
-		} }) : null;
-		lbDl = el('a', { 'class': 'ch-lb__btn', 'aria-label': T.download, html: ICON.download });
-		lbPlay = el('button', { type: 'button', 'class': 'ch-lb__btn', 'aria-label': T.slideshow, html: ICON.play, onclick: function () { lbTimer ? stopShow() : startShow(); } });
+		lbName = el('span', { 'class': 'ch-lb__name' });
+
+		if (CFG.canFavourite) {
+			lbHeart = lbButton('heart', T.favourite, function () {
+				toggleHeart(parseInt(lbItems[lbIndex].getAttribute('data-cg-photo'), 10));
+			});
+			lbHeart.setAttribute('aria-pressed', 'false');
+			lbHeartLabel = lbHeart.cgLabel;
+		} else if (CFG.signInForFav) {
+			lbHeart = el('a', { 'class': 'ch-lb__btn', href: CFG.loginUrl, html: ICON.heart }, [el('span', { text: T.signInFav })]);
+		}
+		lbDl = el('a', { 'class': 'ch-lb__btn', html: ICON.download }, [el('span', { text: T.download })]);
+		lbPlay = lbButton('play', T.slideshow, function () { if (lbTimer) { stopShow(); } else { startShow(); } });
+		lbPlayLabel = lbPlay.cgLabel;
 
 		var stage = el('div', { 'class': 'ch-lb__stage' }, [
 			lbImg,
-			el('button', { type: 'button', 'class': 'ch-lb__btn ch-lb__nav ch-lb__nav--prev', 'aria-label': T.previous, html: ICON.prev, onclick: function () { lbGo(-1); } }),
-			el('button', { type: 'button', 'class': 'ch-lb__btn ch-lb__nav ch-lb__nav--next', 'aria-label': T.next, html: ICON.next, onclick: function () { lbGo(1); } })
+			el('button', { type: 'button', 'class': 'ch-lb__btn ch-lb__nav ch-lb__nav--prev', 'aria-label': T.previous, html: ICON.prev, onclick: function () { stopShow(); lbGo(-1); } }),
+			el('button', { type: 'button', 'class': 'ch-lb__btn ch-lb__nav ch-lb__nav--next', 'aria-label': T.next, html: ICON.next, onclick: function () { stopShow(); lbGo(1); } })
 		]);
 
 		lb = el('div', { 'class': 'ch-lb', role: 'dialog', 'aria-modal': 'true', 'aria-label': document.title, hidden: '' }, [
 			el('div', { 'class': 'ch-lb__bar' }, [
 				lbCount,
-				el('div', { 'class': 'ch-lb__tools' }, [
-					lbHeart, lbDl, lbPlay,
-					el('button', { type: 'button', 'class': 'ch-lb__btn', 'aria-label': T.close, html: ICON.close, onclick: closeLightbox })
-				])
+				lbName,
+				lbButton('close', T.back, closeLightbox, 'ch-lb__back')
 			]),
 			stage,
-			lbName
+			el('div', { 'class': 'ch-lb__actions' }, [
+				lbButton('prev', T.prevShort, function () { stopShow(); lbGo(-1); }),
+				el('span', { 'class': 'ch-lb__spacer' }),
+				lbHeart,
+				lbDl,
+				lbPlay,
+				el('span', { 'class': 'ch-lb__spacer' }),
+				lbButton('next', T.nextShort, function () { stopShow(); lbGo(1); })
+			])
 		]);
-		document.body.appendChild(lb);
+		root.appendChild(lb);
 
 		// Swipe on phones.
 		var x0 = null;
@@ -339,7 +364,7 @@
 		stage.addEventListener('touchend', function (e) {
 			if (x0 === null) { return; }
 			var dx = e.changedTouches[0].clientX - x0;
-			if (Math.abs(dx) > 40) { lbGo(dx < 0 ? 1 : -1); }
+			if (Math.abs(dx) > 40) { stopShow(); lbGo(dx < 0 ? 1 : -1); }
 			x0 = null;
 		});
 		stage.addEventListener('click', function (e) { if (e.target === stage) { closeLightbox(); } });
@@ -355,7 +380,11 @@
 		var dl = f.getAttribute('data-dl');
 		lbDl.hidden = !dl;
 		if (dl) { lbDl.href = dl; }
-		if (lbHeart) { lbHeart.setAttribute('aria-pressed', inCurrent(id) ? 'true' : 'false'); }
+		if (lbHeartLabel) {
+			var on = inCurrent(id);
+			lbHeart.setAttribute('aria-pressed', on ? 'true' : 'false');
+			lbHeartLabel.textContent = on ? T.favourited : T.favourite;
+		}
 		// Preload the next photo.
 		var next = lbItems[(lbIndex + 1) % lbItems.length];
 		if (next) { (new Image()).src = next.getAttribute('data-web'); }
@@ -369,27 +398,55 @@
 		lastFocus = document.activeElement;
 		lb.hidden = false;
 		document.documentElement.style.overflow = 'hidden';
+		// The phone's / browser's Back button returns to the gallery instead of leaving the page.
+		if (window.history && history.pushState) {
+			history.pushState({ cgLightbox: true }, '');
+			lbPushed = true;
+		}
 		lbSync();
 		lbPlay.focus();
 	}
-	function closeLightbox() {
+	function hideLightbox() {
 		stopShow();
 		lb.hidden = true;
 		document.documentElement.style.overflow = '';
 		if (lastFocus) { lastFocus.focus(); }
 	}
+	function closeLightbox() {
+		if (lbPushed) {
+			history.back(); // the popstate handler below hides it
+		} else {
+			hideLightbox();
+		}
+	}
+	window.addEventListener('popstate', function () {
+		if (lb && !lb.hidden) {
+			lbPushed = false;
+			hideLightbox();
+		}
+	});
 	function lbGo(step) {
 		lbIndex = (lbIndex + step + lbItems.length) % lbItems.length;
 		lbSync();
 	}
+	function setPlayIcon(name) {
+		var old = lbPlay.querySelector('svg');
+		var tmp = document.createElement('span');
+		tmp.innerHTML = ICON[name];
+		if (old) { lbPlay.replaceChild(tmp.firstChild, old); }
+	}
 	function startShow() {
-		lbPlay.innerHTML = ICON.pause;
+		setPlayIcon('pause');
+		lbPlayLabel.textContent = T.pause;
 		lbTimer = setInterval(function () { lbGo(1); }, 4000);
 	}
 	function stopShow() {
 		if (lbTimer) { clearInterval(lbTimer); }
 		lbTimer = null;
-		if (lbPlay) { lbPlay.innerHTML = ICON.play; }
+		if (lbPlay) {
+			setPlayIcon('play');
+			lbPlayLabel.textContent = T.slideshow;
+		}
 	}
 
 	$$('.ch-grid__open').forEach(function (a) {
@@ -406,8 +463,8 @@
 	document.addEventListener('keydown', function (e) {
 		if (lb && !lb.hidden) {
 			if (e.key === 'Escape') { closeLightbox(); }
-			else if (e.key === 'ArrowRight') { lbGo(1); }
-			else if (e.key === 'ArrowLeft') { lbGo(-1); }
+			else if (e.key === 'ArrowRight') { stopShow(); lbGo(1); }
+			else if (e.key === 'ArrowLeft') { stopShow(); lbGo(-1); }
 			return;
 		}
 		if (drawer && !drawer.hidden && e.key === 'Escape') { closeDrawer(); }

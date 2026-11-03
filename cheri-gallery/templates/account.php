@@ -13,8 +13,12 @@ $lists = CG_Favourites::lists_for_user( $user->ID );
 
 include cg_template( 'parts/page-start.php' );
 ?>
-<header class="ch-topbar">
-	<a href="<?php echo esc_url( CG_Settings::get( 'website_url' ) ); ?>"><img class="ch-logo" src="<?php echo esc_url( CG_URL . 'assets/img/cheri-logo.png' ); ?>" alt="<?php echo esc_attr( CG_Settings::get( 'from_name' ) ); ?>" width="110"></a>
+<header class="ch-topbar<?php echo CG_Frontend::use_theme_layout() ? ' ch-topbar--slim' : ''; ?>">
+	<?php if ( ! CG_Frontend::use_theme_layout() ) : ?>
+		<a href="<?php echo esc_url( CG_Settings::get( 'website_url' ) ); ?>"><img class="ch-logo" src="<?php echo esc_url( CG_URL . 'assets/img/cheri-logo.png' ); ?>" alt="<?php echo esc_attr( CG_Settings::get( 'from_name' ) ); ?>" width="110"></a>
+	<?php else : ?>
+		<span></span>
+	<?php endif; ?>
 	<a class="ch-gh__link" href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"><?php esc_html_e( 'Sign out', 'cheri-gallery' ); ?></a>
 </header>
 

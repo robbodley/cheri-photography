@@ -105,6 +105,7 @@ class CG_Admin_Settings {
 
 						<div class="ch-set__group">
 							<p class="ch-set__h"><?php esc_html_e( 'Pages', 'cheri-gallery' ); ?></p>
+							<?php CG_Admin::toggle( 'theme_layout', $s['theme_layout'], __( 'Use the website\'s header and footer', 'cheri-gallery' ), __( 'Gallery, sign-in and My galleries pages show your site\'s menu and footer. Turn off for a standalone, distraction-free page.', 'cheri-gallery' ) ); ?>
 							<p class="cg-hint">
 								<?php esc_html_e( 'Client sign in:', 'cheri-gallery' ); ?> <a href="<?php echo esc_url( CG_Auth::login_url() ); ?>" target="_blank"><?php echo esc_html( CG_Auth::login_url() ); ?></a><br>
 								<?php esc_html_e( 'My galleries:', 'cheri-gallery' ); ?> <a href="<?php echo esc_url( CG_Auth::account_url() ); ?>" target="_blank"><?php echo esc_html( CG_Auth::account_url() ); ?></a><br>
@@ -220,6 +221,7 @@ class CG_Admin_Settings {
 			'default_watermark' => isset( $styles[ $p['default_watermark'] ?? '' ] ) ? $p['default_watermark'] : 'off',
 			'web_size'          => min( 4096, max( 1200, absint( $p['web_size'] ?? 2048 ) ) ),
 			'jpeg_quality'      => min( 95, max( 60, absint( $p['jpeg_quality'] ?? 86 ) ) ),
+			'theme_layout'      => empty( $p['theme_layout'] ) ? 0 : 1,
 		);
 		CG_Settings::update( $values );
 		wp_safe_redirect( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-settings&cg_msg=settings_saved' ) );
