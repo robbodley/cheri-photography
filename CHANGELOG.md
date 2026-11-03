@@ -2,6 +2,11 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.6.0
+
+- Easier linking of clients and galleries. On a gallery, each client is listed with a Remove button, and "+ Add a client…" adds another with one pick (no more Ctrl/Cmd-clicking).
+- On a client's page, "Add to a gallery" links them to any gallery (drafts included), and each gallery in their list has a Remove link. Creating galleries stays in the Galleries section.
+
 ## 0.5.1
 
 - My galleries: when you're signed in as the photographer you now see every published gallery (clients still see only their own), and the client lookup is more reliable.

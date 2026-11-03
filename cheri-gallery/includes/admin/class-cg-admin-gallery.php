@@ -47,6 +47,7 @@ class CG_Admin_Gallery {
 					'selected'    => __( '%d selected', 'cheri-gallery' ),
 					'copied'      => __( 'Copied', 'cheri-gallery' ),
 					'leaveUpload' => __( 'Photos are still uploading. Leave anyway?', 'cheri-gallery' ),
+					'remove'      => __( 'Remove', 'cheri-gallery' ),
 				),
 			)
 		);
@@ -163,16 +164,33 @@ class CG_Admin_Gallery {
 		wp_nonce_field( 'cg_save_gallery', '_cg_gallery_nonce' );
 		?>
 		<div class="cg-admin cg-side">
-			<label class="cg-label" for="cg-clients"><?php esc_html_e( 'Client(s)', 'cheri-gallery' ); ?></label>
-			<select id="cg-clients" name="cg[clients][]" multiple size="<?php echo esc_attr( min( 6, max( 3, count( $clients ) ) ) ); ?>" class="cg-select-multi">
+			<span class="cg-label"><?php esc_html_e( 'Client(s)', 'cheri-gallery' ); ?></span>
+			<input type="hidden" name="cg[clients][]" value="0">
+			<ul class="cg-chips" data-cg-chips>
+				<?php
+				foreach ( $s['clients'] as $cid ) :
+					$cu = get_userdata( $cid );
+					if ( ! $cu ) {
+						continue;
+					}
+					?>
+					<li class="cg-chip" data-id="<?php echo esc_attr( $cid ); ?>">
+						<input type="hidden" name="cg[clients][]" value="<?php echo esc_attr( $cid ); ?>">
+						<span class="cg-chip__name"><?php echo esc_html( $cu->display_name ); ?><small><?php echo esc_html( $cu->user_email ); ?></small></span>
+						<button type="button" class="cg-chip__remove" data-cg-chip-remove aria-label="<?php echo esc_attr( sprintf( /* translators: %s: name */ __( 'Remove %s from this gallery', 'cheri-gallery' ), $cu->display_name ) ); ?>">✕ <?php esc_html_e( 'Remove', 'cheri-gallery' ); ?></button>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+			<p class="cg-hint" data-cg-chips-empty <?php echo $s['clients'] ? 'hidden' : ''; ?>><?php esc_html_e( 'No client yet. Add one below so they can sign in, favourite and download.', 'cheri-gallery' ); ?></p>
+			<select class="ch-select cg-add-client" name="cg[clients][]" data-cg-add-client aria-label="<?php esc_attr_e( 'Add a client', 'cheri-gallery' ); ?>">
+				<option value=""><?php esc_html_e( '+ Add a client…', 'cheri-gallery' ); ?></option>
 				<?php foreach ( $clients as $c ) : ?>
-					<option value="<?php echo esc_attr( $c->ID ); ?>" <?php selected( in_array( $c->ID, $s['clients'], true ) ); ?>><?php echo esc_html( $c->display_name . ' (' . $c->user_email . ')' ); ?></option>
+					<option value="<?php echo esc_attr( $c->ID ); ?>" data-email="<?php echo esc_attr( $c->user_email ); ?>" <?php echo in_array( $c->ID, $s['clients'], true ) ? 'hidden disabled' : ''; ?>><?php echo esc_html( $c->display_name . ' (' . $c->user_email . ')' ); ?></option>
 				<?php endforeach; ?>
 			</select>
-			<input type="hidden" name="cg[clients][]" value="0">
 			<p class="cg-hint">
-				<?php esc_html_e( 'Ctrl/Cmd-click to pick both of a couple.', 'cheri-gallery' ); ?>
-				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-clients&action=new' ) ); ?>" target="_blank"><?php esc_html_e( 'Add a client', 'cheri-gallery' ); ?></a>
+				<?php esc_html_e( 'For a couple, add both. Changes save when you press Update.', 'cheri-gallery' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-clients&action=new' ) ); ?>" target="_blank"><?php esc_html_e( 'New client', 'cheri-gallery' ); ?></a>
 			</p>
 
 			<label class="cg-label" for="cg-type"><?php esc_html_e( 'Session type', 'cheri-gallery' ); ?></label>

@@ -11,6 +11,7 @@ class CG_Admin_Clients {
 		add_action( 'admin_post_cg_add_client', array( __CLASS__, 'handle_add' ) );
 		add_action( 'admin_post_cg_save_client', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_post_cg_send_link', array( __CLASS__, 'handle_send_link' ) );
+		add_action( 'admin_post_cg_client_gallery', array( __CLASS__, 'handle_client_gallery' ) );
 	}
 
 	public static function url( $args = array() ) {
@@ -173,7 +174,7 @@ class CG_Admin_Clients {
 			<label class="ch-field"><span class="ch-field__label"><?php esc_html_e( 'Phone (optional)', 'cheri-gallery' ); ?></span><input class="ch-field__input" type="tel" name="phone" value="<?php echo esc_attr( $f['phone'] ); ?>"></label>
 		</div>
 		<label class="ch-field"><span class="ch-field__label"><?php esc_html_e( 'Private notes (only you see these)', 'cheri-gallery' ); ?></span><textarea class="ch-field__input cg-textarea" name="notes" rows="3"><?php echo esc_textarea( $f['notes'] ); ?></textarea></label>
-		<p class="cg-hint"><?php esc_html_e( 'For a couple, add each person as a client so both can sign in, then pick both on the gallery.', 'cheri-gallery' ); ?></p>
+		<p class="cg-hint"><?php esc_html_e( 'For a couple, add each person as a client so both can sign in, then add both to the gallery.', 'cheri-gallery' ); ?></p>
 		<?php
 	}
 
@@ -211,8 +212,15 @@ class CG_Admin_Clients {
 			echo '<p>' . esc_html__( 'Client not found.', 'cheri-gallery' ) . '</p>';
 			return;
 		}
-		$galleries = CG_Galleries::for_client( $uid );
+		$galleries = CG_Galleries::for_client( $uid, true );
 		$lists     = CG_Favourites::lists_for_user( $uid );
+		$linked    = wp_list_pluck( $galleries, 'ID' );
+		$others    = array_filter(
+			CG_Galleries::all_published( true ),
+			function ( $g ) use ( $linked ) {
+				return ! in_array( $g->ID, $linked, true );
+			}
+		);
 		?>
 		<div class="cg-admin">
 			<p><a href="<?php echo esc_url( self::url() ); ?>">← <?php esc_html_e( 'All clients', 'cheri-gallery' ); ?></a></p>
@@ -236,22 +244,46 @@ class CG_Admin_Clients {
 					<section class="ch-panel">
 						<div class="ch-panel__head">
 							<h2 class="ch-panel__title"><?php esc_html_e( 'Galleries', 'cheri-gallery' ); ?></h2>
-							<a class="ch-btn ch-btn--sm ch-btn--outline" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . CG_Galleries::POST_TYPE ) ); ?>"><?php esc_html_e( 'Add gallery', 'cheri-gallery' ); ?></a>
+							<?php if ( $others ) : ?>
+								<form class="cg-addto" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<?php wp_nonce_field( 'cg_client_gallery_' . $uid ); ?>
+									<input type="hidden" name="action" value="cg_client_gallery">
+									<input type="hidden" name="client" value="<?php echo esc_attr( $uid ); ?>">
+									<input type="hidden" name="op" value="add">
+									<select class="ch-select" name="gallery" required aria-label="<?php esc_attr_e( 'Gallery', 'cheri-gallery' ); ?>">
+										<option value=""><?php esc_html_e( 'Choose a gallery…', 'cheri-gallery' ); ?></option>
+										<?php foreach ( $others as $og ) : ?>
+											<option value="<?php echo esc_attr( $og->ID ); ?>"><?php echo esc_html( get_the_title( $og ) . ( 'publish' !== $og->post_status ? ' (' . __( 'draft', 'cheri-gallery' ) . ')' : '' ) ); ?></option>
+										<?php endforeach; ?>
+									</select>
+									<button class="ch-btn ch-btn--sm ch-btn--outline" type="submit"><?php esc_html_e( 'Add to a gallery', 'cheri-gallery' ); ?></button>
+								</form>
+							<?php endif; ?>
 						</div>
 						<?php if ( $galleries ) : ?>
 							<table class="ch-table">
 								<tbody>
 								<?php foreach ( $galleries as $g ) : ?>
 									<tr>
-										<td><a class="ch-who__name" href="<?php echo esc_url( get_edit_post_link( $g->ID ) ); ?>"><?php echo esc_html( get_the_title( $g ) ); ?></a><span class="ch-who__mail"><?php echo esc_html( cg_session_label( CG_Galleries::setting( $g->ID, 'session_type' ) ) . ' · ' . cg_format_date( CG_Galleries::setting( $g->ID, 'event_date' ), 'j M Y' ) ); ?></span></td>
+										<td><a class="ch-who__name" href="<?php echo esc_url( get_edit_post_link( $g->ID ) ); ?>"><?php echo esc_html( get_the_title( $g ) ); ?></a><?php echo 'publish' !== $g->post_status ? '<span class="cg-status">' . esc_html__( 'Draft', 'cheri-gallery' ) . '</span>' : ''; ?><span class="ch-who__mail"><?php echo esc_html( cg_session_label( CG_Galleries::setting( $g->ID, 'session_type' ) ) . ' · ' . cg_format_date( CG_Galleries::setting( $g->ID, 'event_date' ), 'j M Y' ) ); ?></span></td>
 										<td class="num"><?php echo esc_html( CG_Photos::count( $g->ID ) ); ?> <?php esc_html_e( 'photos', 'cheri-gallery' ); ?></td>
 										<td class="num"><a href="<?php echo esc_url( CG_Admin_Gallery::share_url( $g->ID ) ); ?>"><?php esc_html_e( 'Share', 'cheri-gallery' ); ?></a></td>
+										<td class="num">
+											<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('<?php echo esc_js( __( 'Remove this client from the gallery? The gallery and photos stay as they are.', 'cheri-gallery' ) ); ?>');">
+												<?php wp_nonce_field( 'cg_client_gallery_' . $uid ); ?>
+												<input type="hidden" name="action" value="cg_client_gallery">
+												<input type="hidden" name="client" value="<?php echo esc_attr( $uid ); ?>">
+												<input type="hidden" name="gallery" value="<?php echo esc_attr( $g->ID ); ?>">
+												<input type="hidden" name="op" value="remove">
+												<button type="submit" class="cg-linkbtn"><?php esc_html_e( 'Remove', 'cheri-gallery' ); ?></button>
+											</form>
+										</td>
 									</tr>
 								<?php endforeach; ?>
 								</tbody>
 							</table>
 						<?php else : ?>
-							<div class="ch-panel__body"><p class="cg-hint"><?php esc_html_e( 'Not on any gallery yet. Open a gallery and pick them under "Client & shoot".', 'cheri-gallery' ); ?></p></div>
+							<div class="ch-panel__body"><p class="cg-hint"><?php esc_html_e( 'Not on any gallery yet. Use "Add to a gallery" above.', 'cheri-gallery' ); ?></p></div>
 						<?php endif; ?>
 					</section>
 				</div>
@@ -393,6 +425,26 @@ class CG_Admin_Clients {
 		update_user_meta( $uid, '_cg_phone', isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '' );
 		update_user_meta( $uid, '_cg_notes', isset( $_POST['notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['notes'] ) ) : '' );
 		wp_safe_redirect( self::url( array( 'client' => $uid, 'cg_msg' => 'client_saved' ) ) );
+		exit;
+	}
+
+	/**
+	 * Add this client to a gallery, or remove them from one.
+	 */
+	public static function handle_client_gallery() {
+		$uid = isset( $_POST['client'] ) ? absint( $_POST['client'] ) : 0;
+		if ( ! current_user_can( CG_CAP ) ) {
+			wp_die( esc_html__( 'Sorry, you can\'t do that.', 'cheri-gallery' ) );
+		}
+		check_admin_referer( 'cg_client_gallery_' . $uid );
+		$gid = isset( $_POST['gallery'] ) ? absint( $_POST['gallery'] ) : 0;
+		$u   = get_userdata( $uid );
+		if ( ! $u || ! CG_Auth::is_client( $u ) || ! CG_Galleries::is_gallery( $gid ) ) {
+			wp_die( esc_html__( 'Client or gallery not found.', 'cheri-gallery' ) );
+		}
+		$add = isset( $_POST['op'] ) && 'add' === $_POST['op'];
+		CG_Galleries::link_client( $gid, $uid, $add );
+		wp_safe_redirect( self::url( array( 'client' => $uid, 'cg_msg' => $add ? 'gallery_linked' : 'gallery_unlinked' ) ) );
 		exit;
 	}
 

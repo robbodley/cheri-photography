@@ -96,3 +96,17 @@
 .ch-sh__mark { width: 110px; height: auto; }
 .ch-list__meta { display: block; }
 .cg-error { color: var(--ch-danger); }
+
+/* Clients on a gallery */
+.cg-chips { list-style: none; margin: 0 0 var(--ch-space-2); padding: 0; display: grid; gap: 6px; }
+.cg-chip { display: flex; align-items: center; justify-content: space-between; gap: var(--ch-space-2); padding: 6px 8px 6px 10px; background: var(--ch-surface-cream); border: 1px solid var(--ch-line); }
+.cg-chip__name { display: grid; font-size: 13px; line-height: 18px; color: var(--ch-ink); min-width: 0; }
+.cg-chip__name small { font-size: 11px; color: var(--ch-ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cg-chip__remove { flex: none; border: 0; background: none; color: var(--ch-danger); font: 600 11px/16px var(--ch-font-sans); cursor: pointer; padding: 4px; }
+.cg-chip__remove:hover { text-decoration: underline; }
+.cg-add-client { width: 100%; }
+.cg-addto { display: flex; gap: var(--ch-space-2); align-items: center; flex-wrap: wrap; }
+.cg-addto select { max-width: 280px; }
+.cg-status { font-size: 11px; color: var(--ch-ink-muted); text-transform: uppercase; letter-spacing: .12em; margin-left: 6px; }
+.cg-linkbtn { border: 0; background: none; padding: 0; color: var(--ch-danger); cursor: pointer; font-size: 13px; }
+.cg-linkbtn:hover { text-decoration: underline; }

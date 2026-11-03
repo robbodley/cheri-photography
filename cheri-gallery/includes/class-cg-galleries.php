@@ -232,9 +232,9 @@ class CG_Galleries {
 	/**
 	 * Galleries a client account belongs to.
 	 */
-	public static function for_client( $user_id ) {
+	public static function for_client( $user_id, $include_unpublished = false ) {
 		$user_id = absint( $user_id );
-		$all     = self::all_published();
+		$all     = self::all_published( $include_unpublished );
 		return array_values(
 			array_filter(
 				$all,
@@ -248,11 +248,11 @@ class CG_Galleries {
 	/**
 	 * Every published gallery, newest shoot first.
 	 */
-	public static function all_published() {
+	public static function all_published( $include_unpublished = false ) {
 		$posts = get_posts(
 			array(
 				'post_type'      => self::POST_TYPE,
-				'post_status'    => 'publish',
+				'post_status'    => $include_unpublished ? array( 'publish', 'draft', 'pending', 'future', 'private' ) : 'publish',
 				'posts_per_page' => -1,
 				'orderby'        => 'date',
 				'order'          => 'DESC',
@@ -273,6 +273,16 @@ class CG_Galleries {
 	public static function cover_css_position( $gallery_id ) {
 		$pos = self::setting( $gallery_id, 'cover_position' );
 		return 'center ' . ( in_array( $pos, array( 'top', 'bottom' ), true ) ? $pos : 'center' );
+	}
+
+	/**
+	 * Add or remove one client on a gallery.
+	 */
+	public static function link_client( $gallery_id, $user_id, $add = true ) {
+		$clients = self::setting( $gallery_id, 'clients' );
+		$clients = $add ? array_merge( $clients, array( absint( $user_id ) ) ) : array_diff( $clients, array( absint( $user_id ) ) );
+		self::save( $gallery_id, array( 'clients' => array_values( array_unique( $clients ) ) ) );
+		self::sync_client_index( $gallery_id );
 	}
 
 	/**

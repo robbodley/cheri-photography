@@ -10,6 +10,48 @@
 	function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
 	function fmt(s) { var a = arguments, i = 0; return s.replace(/%(\d\$)?[ds]/g, function (m, pos) { return a[pos ? parseInt(pos, 10) : ++i]; }); }
 
+	/* Clients on this gallery: add from the dropdown, remove with ✕ */
+	var chips = $('[data-cg-chips]');
+	var addClient = $('[data-cg-add-client]');
+	function chipsEmpty() {
+		var empty = $('[data-cg-chips-empty]');
+		if (empty) { empty.hidden = !!chips.children.length; }
+	}
+	if (chips && addClient) {
+		addClient.addEventListener('change', function () {
+			var opt = addClient.options[addClient.selectedIndex];
+			if (!opt || !opt.value) { return; }
+			var li = document.createElement('li');
+			li.className = 'cg-chip';
+			li.setAttribute('data-id', opt.value);
+			var hidden = document.createElement('input');
+			hidden.type = 'hidden'; hidden.name = 'cg[clients][]'; hidden.value = opt.value;
+			var name = document.createElement('span');
+			name.className = 'cg-chip__name';
+			name.textContent = opt.textContent.replace(/\s*\([^)]*\)\s*$/, '');
+			var small = document.createElement('small');
+			small.textContent = opt.getAttribute('data-email') || '';
+			name.appendChild(small);
+			var rm = document.createElement('button');
+			rm.type = 'button'; rm.className = 'cg-chip__remove'; rm.setAttribute('data-cg-chip-remove', '');
+			rm.textContent = '✕ ' + (T.remove || 'Remove');
+			li.appendChild(hidden); li.appendChild(name); li.appendChild(rm);
+			chips.appendChild(li);
+			opt.hidden = true; opt.disabled = true;
+			addClient.value = '';
+			chipsEmpty();
+		});
+		chips.addEventListener('click', function (e) {
+			var b = e.target.closest('[data-cg-chip-remove]');
+			if (!b) { return; }
+			var li = b.closest('.cg-chip');
+			var opt = addClient.querySelector('option[value="' + li.getAttribute('data-id') + '"]');
+			if (opt) { opt.hidden = false; opt.disabled = false; }
+			li.remove();
+			chipsEmpty();
+		});
+	}
+
 	/* Visibility hints */
 	$$('[data-cg-vis]').forEach(function (r) {
 		r.addEventListener('change', function () {
