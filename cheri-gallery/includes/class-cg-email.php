@@ -130,7 +130,9 @@ class CG_Email {
 		$uploads = wp_upload_dir( null, false );
 		$dir     = trailingslashit( $uploads['basedir'] ) . 'cheri-gallery-email';
 		cg_ensure_dir( $dir );
-		$name = absint( $photo->gallery_id ) . '-' . substr( hash_hmac( 'sha256', $photo->id . '|' . $photo->file, wp_salt( 'auth' ) ), 0, 20 ) . '.jpg';
+		$pos  = (string) CG_Galleries::setting( $photo->gallery_id, 'cover_position' );
+		$pos  = in_array( $pos, array( 'top', 'bottom' ), true ) ? $pos : 'center';
+		$name = absint( $photo->gallery_id ) . '-' . substr( hash_hmac( 'sha256', $photo->id . '|' . $photo->file . '|' . $pos, wp_salt( 'auth' ) ), 0, 20 ) . '.jpg';
 		$path = $dir . '/' . $name;
 		if ( ! file_exists( $path ) ) {
 			$editor = wp_get_image_editor( CG_Photos::original_path( $photo ) );
@@ -140,7 +142,7 @@ class CG_Email {
 			if ( method_exists( $editor, 'maybe_exif_rotate' ) ) {
 				$editor->maybe_exif_rotate();
 			}
-			$editor->resize( 1200, 800, true );
+			$editor->resize( 1200, 800, array( 'center', $pos ) );
 			$editor->set_quality( 82 );
 			$saved = $editor->save( $path, 'image/jpeg' );
 			if ( is_wp_error( $saved ) ) {

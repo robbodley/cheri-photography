@@ -17,7 +17,7 @@ include cg_template( 'parts/page-start.php' );
 ?>
 <section class="ch-cover" id="cg-cover">
 	<?php if ( $v['cover'] ) : ?>
-		<div class="ch-cover__img"><img src="<?php echo esc_url( CG_Delivery::photo_url( $v['cover'], 'web' ) ); ?>" alt="" fetchpriority="high"></div>
+		<div class="ch-cover__img"><img src="<?php echo esc_url( CG_Delivery::photo_url( $v['cover'], 'web' ) ); ?>" alt="" fetchpriority="high" style="object-position: <?php echo esc_attr( CG_Galleries::cover_css_position( $gid ) ); ?>"></div>
 	<?php else : ?>
 		<div class="ch-cover__img"><span class="ch-ph ch-ph--tan"></span></div>
 	<?php endif; ?>

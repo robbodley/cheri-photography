@@ -85,6 +85,7 @@ class CG_Galleries {
 			'session_type'     => 'wedding',
 			'event_date'       => '',
 			'cover_photo'      => 0,
+			'cover_position'   => 'center',
 			'visibility'       => 'password',
 			'password'         => '',
 			'private_key'      => '',
@@ -137,6 +138,9 @@ class CG_Galleries {
 		}
 		if ( isset( $input['expiry'] ) ) {
 			$s['expiry'] = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $input['expiry'] ) ? $input['expiry'] : '';
+		}
+		if ( isset( $input['cover_position'] ) && in_array( $input['cover_position'], array( 'top', 'center', 'bottom' ), true ) ) {
+			$s['cover_position'] = $input['cover_position'];
 		}
 		if ( isset( $input['cover_photo'] ) ) {
 			$s['cover_photo'] = absint( $input['cover_photo'] );
@@ -229,18 +233,46 @@ class CG_Galleries {
 	 * Galleries a client account belongs to.
 	 */
 	public static function for_client( $user_id ) {
-		$all = get_posts(
+		$user_id = absint( $user_id );
+		$all     = self::all_published();
+		return array_values(
+			array_filter(
+				$all,
+				function ( $post ) use ( $user_id ) {
+					return in_array( $user_id, self::setting( $post->ID, 'clients' ), true );
+				}
+			)
+		);
+	}
+
+	/**
+	 * Every published gallery, newest shoot first.
+	 */
+	public static function all_published() {
+		$posts = get_posts(
 			array(
 				'post_type'      => self::POST_TYPE,
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
-				'meta_key'       => '_cg_client',
-				'meta_value'     => absint( $user_id ),
 				'orderby'        => 'date',
 				'order'          => 'DESC',
 			)
 		);
-		return $all;
+		usort(
+			$posts,
+			function ( $a, $b ) {
+				return strcmp( (string) self::setting( $b->ID, 'event_date' ), (string) self::setting( $a->ID, 'event_date' ) );
+			}
+		);
+		return $posts;
+	}
+
+	/**
+	 * CSS object-position for the cover photo ("center top" etc.).
+	 */
+	public static function cover_css_position( $gallery_id ) {
+		$pos = self::setting( $gallery_id, 'cover_position' );
+		return 'center ' . ( in_array( $pos, array( 'top', 'bottom' ), true ) ? $pos : 'center' );
 	}
 
 	/**

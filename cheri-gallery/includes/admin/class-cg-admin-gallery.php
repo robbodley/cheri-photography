@@ -184,6 +184,14 @@ class CG_Admin_Gallery {
 
 			<label class="cg-label" for="cg-date"><?php esc_html_e( 'Shoot date', 'cheri-gallery' ); ?></label>
 			<input id="cg-date" type="date" name="cg[event_date]" value="<?php echo esc_attr( $s['event_date'] ); ?>" class="ch-select">
+
+			<label class="cg-label" for="cg-cover-pos"><?php esc_html_e( 'Cover photo position', 'cheri-gallery' ); ?></label>
+			<select id="cg-cover-pos" name="cg[cover_position]" class="ch-select">
+				<option value="top" <?php selected( $s['cover_position'], 'top' ); ?>><?php esc_html_e( 'Top (keep heads in view)', 'cheri-gallery' ); ?></option>
+				<option value="center" <?php selected( $s['cover_position'], 'center' ); ?>><?php esc_html_e( 'Centre', 'cheri-gallery' ); ?></option>
+				<option value="bottom" <?php selected( $s['cover_position'], 'bottom' ); ?>><?php esc_html_e( 'Bottom', 'cheri-gallery' ); ?></option>
+			</select>
+			<p class="cg-hint"><?php esc_html_e( 'Which part of the cover photo stays in view when it\'s cropped to fill the screen, the gallery cards and the share email. Pick the cover itself with ★ in Photos.', 'cheri-gallery' ); ?></p>
 		</div>
 		<?php
 	}

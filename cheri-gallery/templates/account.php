@@ -20,14 +20,18 @@ include cg_template( 'parts/page-start.php' );
 		<hr class="ch-sh__rule">
 		<?php /* translators: %s: first name */ ?>
 		<h1 class="ch-sh__title"><?php echo esc_html( sprintf( __( 'Hello %s', 'cheri-gallery' ), $name ) ); ?></h1>
-		<p class="ch-sh__intro"><?php esc_html_e( 'Your galleries, all in one place.', 'cheri-gallery' ); ?></p>
+		<?php if ( current_user_can( CG_CAP ) ) : ?>
+			<p class="ch-sh__intro"><?php esc_html_e( 'You\'re signed in as the photographer, so you see every published gallery. Each client sees only their own.', 'cheri-gallery' ); ?></p>
+		<?php else : ?>
+			<p class="ch-sh__intro"><?php esc_html_e( 'Your galleries, all in one place.', 'cheri-gallery' ); ?></p>
+		<?php endif; ?>
 	</div>
 
 	<div class="ch-band__inner">
 		<?php if ( $galleries ) : ?>
 			<?php echo cg_render( 'parts/album-grid.php', array( 'galleries' => $galleries ) ); // phpcs:ignore ?>
 		<?php else : ?>
-			<p class="ch-empty"><?php esc_html_e( 'Your galleries will appear here as soon as they\'re ready.', 'cheri-gallery' ); ?></p>
+			<p class="ch-empty"><?php echo current_user_can( CG_CAP ) ? esc_html__( 'No published galleries yet.', 'cheri-gallery' ) : esc_html__( 'Your galleries will appear here as soon as they\'re ready.', 'cheri-gallery' ); ?></p>
 		<?php endif; ?>
 	</div>
 

@@ -2,6 +2,11 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.5.1
+
+- My galleries: when you're signed in as the photographer you now see every published gallery (clients still see only their own), and the client lookup is more reliable.
+- New "Cover photo position" for each gallery (Top, Centre or Bottom) in the "Client & shoot" box. It sets which part of the cover stays in view on the full-screen cover, the gallery cards and the share email.
+
 ## 0.5.0
 
 - A gallery now has no header: the cover photo fills the screen right to the top, with your website's footer at the bottom.

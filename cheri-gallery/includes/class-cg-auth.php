@@ -150,7 +150,8 @@ class CG_Auth {
 			exit;
 		}
 		$user      = wp_get_current_user();
-		$galleries = CG_Galleries::for_client( $user->ID );
+		// Cheri (or another admin) sees every gallery here, to check how they look to clients.
+		$galleries = current_user_can( CG_CAP ) ? CG_Galleries::all_published() : CG_Galleries::for_client( $user->ID );
 		update_user_meta( $user->ID, '_cg_last_visit', current_time( 'mysql' ) );
 		echo cg_render( 'account.php', array( 'user' => $user, 'galleries' => $galleries ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 		exit;

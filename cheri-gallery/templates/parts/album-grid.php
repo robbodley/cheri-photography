@@ -28,7 +28,7 @@ $badge = array(
 		<a class="ch-album" href="<?php echo esc_url( CG_Galleries::link( $g->ID, CG_Access::is_client_of( $g->ID ) ) ); ?>">
 			<div class="ch-album__media">
 				<?php if ( $cover ) : ?>
-					<img src="<?php echo esc_url( $cover ); ?>" alt="" loading="lazy">
+					<img src="<?php echo esc_url( $cover ); ?>" alt="" loading="lazy" style="object-position: <?php echo esc_attr( CG_Galleries::cover_css_position( $g->ID ) ); ?>">
 				<?php else : ?>
 					<span class="ch-ph ch-ph--tan"></span>
 				<?php endif; ?>
