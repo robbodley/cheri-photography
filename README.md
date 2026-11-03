@@ -23,13 +23,29 @@ The plugin is in [`cheri-gallery/`](cheri-gallery/). The look comes from the Che
 
 ## Installing
 
-1. Download `cheri-gallery.zip` (or zip the `cheri-gallery` folder).
+1. Download `cheri-gallery.zip` from the [latest release](https://github.com/robbodley/cheri-photography/releases/latest).
 2. In WordPress: **Plugins → Add New → Upload Plugin**, choose the zip, then **Activate**.
 3. Go to **Cheri Gallery → Settings**: check the email address (`photome@cheri.photography`), add your Instagram link, and press **Save**.
 4. **Set up an email sender** (needed for sign-in links and gallery emails): install **WP Mail SMTP**, connect the mailbox that hosts photome@cheri.photography, add the SPF/DKIM records it gives you, and use **Send test** on the settings page.
 5. If gallery links show "Page not found", go to **Settings → Permalinks** and press **Save** once.
 
 Requirements: WordPress 6.2+, PHP 7.4+ with the GD or Imagick, zip and exif extensions (standard on most hosts). Uploads larger than your host's `upload_max_filesize` are refused with a clear message; ask your host to raise the limit if full-resolution JPEGs are bigger.
+
+## Updating
+
+The plugin updates itself from this repository's GitHub Releases, like any plugin from wordpress.org:
+
+- WordPress checks twice a day. When there's a newer version, **Plugins** shows **Update now**. Click **Enable auto-updates** next to Cheri Gallery to have it install on its own.
+- **Cheri Gallery → Settings → Updates** shows the installed and latest versions, the release notes, and a **Check for updates now** button.
+- Updates replace only the plugin's code. Photos (in `wp-content/uploads/cheri-gallery/`), clients, favourites and settings stay as they are, and any database changes a new version needs are applied automatically.
+- The repository is public, so no token is needed. If it's ever made private, add a read-only GitHub token under Settings → Updates.
+
+### Publishing an update (developer)
+
+1. Change the code and bump the version in **both** places in `cheri-gallery/cheri-gallery.php` (the `Version:` header and `CG_VERSION`).
+2. Commit, then push an annotated tag with the release notes as its message:
+   `git tag -a v0.2.1 -m "What changed"` then `git push origin v0.2.1`
+3. The **Release plugin** GitHub Action checks that the tag matches the version, syntax-checks the PHP, builds `cheri-gallery.zip` and publishes the release. Sites pick it up on their next check.
 
 ## Pages and addresses
 

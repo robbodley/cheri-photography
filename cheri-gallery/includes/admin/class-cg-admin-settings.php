@@ -10,6 +10,7 @@ class CG_Admin_Settings {
 	public static function init() {
 		add_action( 'admin_post_cg_save_settings', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_post_cg_test_email', array( __CLASS__, 'handle_test_email' ) );
+		add_action( 'admin_post_cg_check_updates', array( __CLASS__, 'handle_check_updates' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'mail_notice' ) );
 	}
 
@@ -124,8 +125,81 @@ class CG_Admin_Settings {
 					</div>
 				</section>
 			</form>
+
+			<?php self::updates_panel(); ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Updates: installed vs latest version, check now, optional GitHub token.
+	 */
+	private static function updates_panel() {
+		$release = CG_Updater::latest();
+		$update  = CG_Updater::has_update( $release );
+		$token   = get_option( CG_Updater::TOKEN_OPT, '' );
+		?>
+		<form class="cg-admin" id="updates" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'cg_check_updates' ); ?>
+			<input type="hidden" name="action" value="cg_check_updates">
+			<section class="ch-panel cg-narrow-panel">
+				<div class="ch-panel__head">
+					<h2 class="ch-panel__title"><?php esc_html_e( 'Updates', 'cheri-gallery' ); ?></h2>
+					<button class="ch-btn ch-btn--sm ch-btn--outline" type="submit"><?php esc_html_e( 'Check for updates now', 'cheri-gallery' ); ?></button>
+				</div>
+				<div class="ch-panel__body ch-set">
+					<div class="ch-set__group">
+						<p>
+							<?php
+							/* translators: %s: version */
+							echo esc_html( sprintf( __( 'Installed: version %s', 'cheri-gallery' ), CG_VERSION ) );
+							echo '<br>';
+							if ( is_wp_error( $release ) ) {
+								echo esc_html( __( 'Latest:', 'cheri-gallery' ) . ' ' . $release->get_error_message() );
+							} else {
+								/* translators: 1: version, 2: date */
+								echo esc_html( sprintf( __( 'Latest on GitHub: version %1$s (%2$s)', 'cheri-gallery' ), $release['version'], $release['published'] ? mysql2date( 'j M Y', $release['published'] ) : '' ) );
+							}
+							?>
+						</p>
+						<?php if ( $update ) : ?>
+							<p><a class="ch-btn ch-btn--sm" href="<?php echo esc_url( admin_url( 'plugins.php?plugin_status=upgrade' ) ); ?>"><?php esc_html_e( 'Go to the update', 'cheri-gallery' ); ?></a></p>
+							<?php if ( $release['notes'] ) : ?>
+								<div class="cg-callout"><p><strong><?php esc_html_e( 'What\'s new', 'cheri-gallery' ); ?></strong></p><?php echo wp_kses_post( wpautop( esc_html( $release['notes'] ) ) ); ?></div>
+							<?php endif; ?>
+						<?php elseif ( ! is_wp_error( $release ) ) : ?>
+							<p class="cg-hint">✓ <?php esc_html_e( 'You have the latest version.', 'cheri-gallery' ); ?></p>
+						<?php endif; ?>
+						<p class="cg-hint"><?php esc_html_e( 'WordPress checks twice a day. When there\'s an update, Plugins shows "Update now". To install updates automatically, click "Enable auto-updates" next to Cheri Gallery on the Plugins page. Photos, clients and favourites are never touched by an update.', 'cheri-gallery' ); ?></p>
+					</div>
+					<div class="ch-set__group">
+						<label class="ch-field">
+							<span class="ch-field__label"><?php esc_html_e( 'GitHub token (only if the repository is made private)', 'cheri-gallery' ); ?></span>
+							<input class="ch-field__input" type="password" name="github_token" value="<?php echo $token ? '••••••••' : ''; ?>" autocomplete="off" placeholder="<?php esc_attr_e( 'Leave empty for a public repository', 'cheri-gallery' ); ?>">
+						</label>
+						<p class="cg-hint"><?php esc_html_e( 'A fine-grained token with read-only "Contents" access to robbodley/cheri-photography. Saved when you press Check for updates now.', 'cheri-gallery' ); ?></p>
+					</div>
+				</div>
+			</section>
+		</form>
+		<?php
+	}
+
+	public static function handle_check_updates() {
+		if ( ! current_user_can( 'update_plugins' ) ) {
+			wp_die( esc_html__( 'Sorry, you can\'t do that.', 'cheri-gallery' ) );
+		}
+		check_admin_referer( 'cg_check_updates' );
+		$token = isset( $_POST['github_token'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['github_token'] ) ) ) : '';
+		if ( '' === $token ) {
+			delete_option( CG_Updater::TOKEN_OPT );
+		} elseif ( false === strpos( $token, '•' ) ) {
+			update_option( CG_Updater::TOKEN_OPT, $token, false );
+		}
+		$release = CG_Updater::check_now();
+		$args    = is_wp_error( $release ) ? array( 'cg_err' => rawurlencode( $release->get_error_message() ) ) : array( 'cg_msg' => CG_Updater::has_update( $release ) ? 'update_found' : 'up_to_date' );
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-settings' ) ) . '#updates' );
+		exit;
 	}
 
 	public static function handle_save() {

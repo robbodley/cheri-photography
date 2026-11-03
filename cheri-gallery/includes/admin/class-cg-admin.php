@@ -89,6 +89,8 @@ class CG_Admin {
 			'link_failed'    => array( 'error', __( 'The email could not be sent. Check your email sender (WP Mail SMTP) is set up.', 'cheri-gallery' ) ),
 			'settings_saved' => array( 'success', __( 'Settings saved.', 'cheri-gallery' ) ),
 			'email_sent'     => array( 'success', __( 'Gallery email sent.', 'cheri-gallery' ) ),
+			'update_found'   => array( 'warning', __( 'A new version of Cheri Gallery is ready. Go to Plugins to update.', 'cheri-gallery' ) ),
+			'up_to_date'     => array( 'success', __( 'Cheri Gallery is up to date.', 'cheri-gallery' ) ),
 		);
 		if ( isset( $map[ $msg ] ) ) {
 			printf( '<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>', esc_attr( $map[ $msg ][0] ), esc_html( $map[ $msg ][1] ) );
