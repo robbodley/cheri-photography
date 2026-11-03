@@ -2,6 +2,13 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.5.0
+
+- A gallery now has no header: the cover photo fills the screen right to the top, with your website's footer at the bottom.
+- My galleries and Sign out (or Client sign in) sit in the gallery bar just under the cover photo.
+- The password, client sign-in and My galleries pages use your website's normal header and footer.
+- Settings → Pages lets you choose the header for a gallery and for the other pages separately, and the footer.
+
 ## 0.4.0
 
 - Fixes the enlarged photo showing no controls (the photo opened on its own instead). The gallery's script wasn't starting, which also stopped the hearts and favourites drawer working. All now work.

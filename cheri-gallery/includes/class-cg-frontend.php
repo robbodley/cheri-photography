@@ -34,8 +34,30 @@ class CG_Frontend {
 	 * Header and footer around the plugin's pages: the website's own (theme) or the gallery's.
 	 * Settings → Pages; by default the gallery's slim logo header and the website's footer.
 	 */
+	/** Which kind of plugin page is rendering: 'gallery' or 'page' (password, sign in, My galleries…). */
+	private static $page_kind = 'page';
+
+	public static function set_page_kind( $kind ) {
+		self::$page_kind = ( 'gallery' === $kind ) ? 'gallery' : 'page';
+	}
+
+	public static function page_kind() {
+		return self::$page_kind;
+	}
+
+	/**
+	 * Header above this page: 'none' (gallery default: the cover photo goes to the top),
+	 * 'theme' (the website's header; default on other pages) or 'gallery' (slim Cheri logo bar).
+	 */
+	public static function header_style() {
+		$key   = 'gallery' === self::$page_kind ? 'gallery_header' : 'pages_header';
+		$style = CG_Settings::get( $key );
+		$style = in_array( $style, array( 'none', 'theme', 'gallery' ), true ) ? $style : ( 'gallery' === self::$page_kind ? 'none' : 'theme' );
+		return apply_filters( 'cg_header_style', $style, self::$page_kind );
+	}
+
 	public static function theme_header() {
-		return (bool) apply_filters( 'cg_theme_header', 'theme' === CG_Settings::get( 'site_header' ) );
+		return 'theme' === self::header_style();
 	}
 
 	public static function theme_footer() {
@@ -150,6 +172,7 @@ class CG_Frontend {
 			return cg_template( 'closed.php' );
 		}
 
+		self::set_page_kind( 'gallery' );
 		$GLOBALS['cg_view'] = self::gallery_view( $gid );
 		self::enqueue_gallery_script( $GLOBALS['cg_view'] );
 		return cg_template( 'gallery.php' );

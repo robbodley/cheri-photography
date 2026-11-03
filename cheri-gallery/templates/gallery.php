@@ -38,6 +38,12 @@ include cg_template( 'parts/page-start.php' );
 			<p class="ch-gh__sub"><?php echo esc_html( CG_Settings::get( 'from_name' ) ); ?></p>
 		</div>
 		<nav class="ch-gh__actions" aria-label="<?php esc_attr_e( 'Gallery actions', 'cheri-gallery' ); ?>">
+			<?php if ( is_user_logged_in() ) : ?>
+				<a class="ch-gh__link ch-gh__link--wide" href="<?php echo esc_url( CG_Auth::account_url() ); ?>"><?php esc_html_e( 'My galleries', 'cheri-gallery' ); ?></a>
+				<a class="ch-gh__link" href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"><?php esc_html_e( 'Sign out', 'cheri-gallery' ); ?></a>
+			<?php elseif ( $s['clients'] ) : ?>
+				<a class="ch-gh__link" href="<?php echo esc_url( $v['login_url'] ); ?>"><?php esc_html_e( 'Client sign in', 'cheri-gallery' ); ?></a>
+			<?php endif; ?>
 			<?php if ( $v['can_favourite'] ) : ?>
 				<button class="ch-btn ch-btn--icon ch-gh__fav" type="button" data-cg-open-favs aria-label="<?php esc_attr_e( 'My favourites', 'cheri-gallery' ); ?>"><?php echo cg_icon( 'heart' ); // phpcs:ignore ?><span class="ch-count" data-cg-fav-count hidden></span></button>
 			<?php elseif ( $v['sign_in_for_fav'] ) : ?>

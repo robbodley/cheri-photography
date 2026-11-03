@@ -7,8 +7,10 @@ defined( 'ABSPATH' ) || exit;
 $cg_settings = CG_Settings::all();
 $cg_theme_footer = CG_Frontend::theme_footer();
 
-// When the website header is used, the client links live down here instead.
-if ( CG_Frontend::theme_header() || ! $cg_theme_footer ) :
+// Client links (My galleries / Sign out) go here unless the gallery logo bar or the gallery's own
+// bar under the cover photo already shows them.
+$cg_links_elsewhere = 'gallery' === CG_Frontend::header_style() || 'gallery' === CG_Frontend::page_kind();
+if ( ! $cg_links_elsewhere || ! $cg_theme_footer ) :
 	?>
 <footer class="ch-foot<?php echo $cg_theme_footer ? ' ch-foot--slim' : ''; ?>">
 	<?php if ( ! $cg_theme_footer ) : ?>

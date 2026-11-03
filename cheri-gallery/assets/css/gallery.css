@@ -6,7 +6,7 @@
 
 /* Cover: full screen on the gallery page */
 .cg-page .ch-cover { min-height: 100vh; min-height: 100svh; }
-.cg-page.cg-themed .ch-cover { min-height: 80vh; min-height: 80svh; }
+.cg-page.cg-has-header .ch-cover { min-height: 80vh; min-height: 80svh; }
 .ch-cover__img img { display: block; }
 .ch-cover__title { padding: 0 var(--ch-space-3); }
 .ch-cover .ch-btn--photo { color: var(--ch-on-photo); }
@@ -148,4 +148,12 @@
 	.ch-sitebar__logo img { width: 96px; }
 	.ch-sitebar__links { position: static; transform: none; gap: var(--ch-space-2); }
 	.ch-sitebar__links a { font-size: 10px; letter-spacing: .12em; }
+}
+
+/* Client links in the gallery bar under the cover */
+.ch-gh__actions .ch-gh__link { margin-right: var(--ch-space-2); white-space: nowrap; }
+@media (max-width: 600px) {
+	.ch-gh__link--wide { display: none; }
+	.ch-gh__actions .ch-gh__link { font-size: 10px; letter-spacing: .12em; margin-right: var(--ch-space-1); }
+	.ch-gh__actions .ch-btn--icon { width: 32px; }
 }

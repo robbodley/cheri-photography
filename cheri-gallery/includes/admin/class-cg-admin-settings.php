@@ -105,15 +105,31 @@ class CG_Admin_Settings {
 
 						<div class="ch-set__group">
 							<p class="ch-set__h"><?php esc_html_e( 'Pages', 'cheri-gallery' ); ?></p>
+							<?php
+							$cg_header_choices = array(
+								'none'    => __( 'No header (cover photo to the top)', 'cheri-gallery' ),
+								'theme'   => __( 'Website header (menu)', 'cheri-gallery' ),
+								'gallery' => __( 'Gallery header (Cheri logo)', 'cheri-gallery' ),
+							);
+							?>
 							<label class="ch-toggle">
-								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'Header on gallery pages', 'cheri-gallery' ); ?></span><span class="ch-toggle__hint"><?php esc_html_e( 'Gallery, sign-in and My galleries pages', 'cheri-gallery' ); ?></span></span>
-								<select class="ch-select" name="site_header">
-									<option value="gallery" <?php selected( $s['site_header'], 'gallery' ); ?>><?php esc_html_e( 'Gallery header (Cheri logo)', 'cheri-gallery' ); ?></option>
-									<option value="theme" <?php selected( $s['site_header'], 'theme' ); ?>><?php esc_html_e( 'Website header (menu)', 'cheri-gallery' ); ?></option>
+								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'Header on a gallery', 'cheri-gallery' ); ?></span><span class="ch-toggle__hint"><?php esc_html_e( 'The page with the cover photo and the photos', 'cheri-gallery' ); ?></span></span>
+								<select class="ch-select" name="gallery_header">
+									<?php foreach ( $cg_header_choices as $key => $label ) : ?>
+										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $s['gallery_header'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+									<?php endforeach; ?>
 								</select>
 							</label>
 							<label class="ch-toggle">
-								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'Footer on gallery pages', 'cheri-gallery' ); ?></span></span>
+								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'Header on other pages', 'cheri-gallery' ); ?></span><span class="ch-toggle__hint"><?php esc_html_e( 'Password, client sign in and My galleries', 'cheri-gallery' ); ?></span></span>
+								<select class="ch-select" name="pages_header">
+									<?php foreach ( array( 'theme', 'gallery' ) as $key ) : ?>
+										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $s['pages_header'], $key ); ?>><?php echo esc_html( $cg_header_choices[ $key ] ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</label>
+							<label class="ch-toggle">
+								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'Footer on all gallery pages', 'cheri-gallery' ); ?></span></span>
 								<select class="ch-select" name="site_footer">
 									<option value="theme" <?php selected( $s['site_footer'], 'theme' ); ?>><?php esc_html_e( 'Website footer', 'cheri-gallery' ); ?></option>
 									<option value="gallery" <?php selected( $s['site_footer'], 'gallery' ); ?>><?php esc_html_e( 'Gallery footer (Cheri logo)', 'cheri-gallery' ); ?></option>
@@ -245,7 +261,8 @@ class CG_Admin_Settings {
 			'default_watermark' => isset( $styles[ $p['default_watermark'] ?? '' ] ) ? $p['default_watermark'] : 'off',
 			'web_size'          => min( 4096, max( 1200, absint( $p['web_size'] ?? 2048 ) ) ),
 			'jpeg_quality'      => min( 95, max( 60, absint( $p['jpeg_quality'] ?? 86 ) ) ),
-			'site_header'       => ( $p['site_header'] ?? '' ) === 'theme' ? 'theme' : 'gallery',
+			'gallery_header'    => in_array( $p['gallery_header'] ?? '', array( 'none', 'theme', 'gallery' ), true ) ? $p['gallery_header'] : 'none',
+			'pages_header'      => ( $p['pages_header'] ?? '' ) === 'gallery' ? 'gallery' : 'theme',
 			'site_footer'       => ( $p['site_footer'] ?? '' ) === 'gallery' ? 'gallery' : 'theme',
 		);
 		CG_Settings::update( $values );

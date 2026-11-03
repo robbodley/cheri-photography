@@ -2,8 +2,8 @@
 /**
  * Opening of the plugin's full pages (gallery, password, sign in, My galleries).
  *
- * Header: the gallery's slim Cheri logo bar (default) or the website's own header (get_header).
- * Settings → Pages.
+ * Header (Settings → Pages): none on a gallery by default, so the cover photo reaches the top;
+ * the website's header (get_header) on other pages; or the gallery's slim Cheri logo bar.
  *
  * @var string $body_class Extra classes for the wrapper.
  */
@@ -12,7 +12,9 @@ defined( 'ABSPATH' ) || exit;
 $body_class = isset( $body_class ) ? $body_class : '';
 $cg_settings = CG_Settings::all();
 
-if ( CG_Frontend::theme_header() ) {
+$cg_header   = CG_Frontend::header_style();
+
+if ( 'theme' === $cg_header ) {
 	get_header();
 } else {
 	?><!doctype html>
@@ -27,8 +29,8 @@ if ( CG_Frontend::theme_header() ) {
 	<?php
 }
 ?>
-<div class="cg-page cg-themed <?php echo esc_attr( $body_class ); ?>" id="cg-root">
-<?php if ( ! CG_Frontend::theme_header() ) : ?>
+<div class="cg-page<?php echo 'none' === $cg_header ? '' : ' cg-has-header'; ?> <?php echo esc_attr( $body_class ); ?>" id="cg-root">
+<?php if ( 'gallery' === $cg_header ) : ?>
 <header class="ch-sitebar">
 	<a class="ch-sitebar__logo" href="<?php echo esc_url( $cg_settings['website_url'] ); ?>"><img src="<?php echo esc_url( CG_URL . 'assets/img/cheri-logo.png' ); ?>" alt="<?php echo esc_attr( $cg_settings['from_name'] ); ?>" width="120" height="60"></a>
 	<nav class="ch-sitebar__links" aria-label="<?php esc_attr_e( 'Client', 'cheri-gallery' ); ?>">
