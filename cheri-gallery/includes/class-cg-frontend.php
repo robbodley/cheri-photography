@@ -1,0 +1,269 @@
+<?php
+/**
+ * Front end: the gallery page, password gate, the [cheri_galleries] shortcode, and assets.
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+class CG_Frontend {
+
+	/** Set while rendering one of the plugin's own full pages. */
+	private static $own_page = false;
+
+	/** Error message for the password form. */
+	private static $password_error = '';
+
+	public static function init() {
+		add_action( 'template_redirect', array( __CLASS__, 'handle_gallery_request' ), 5 );
+		add_filter( 'template_include', array( __CLASS__, 'template' ), 99 );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'isolate_styles' ), 9999 );
+		add_filter( 'wp_robots', array( __CLASS__, 'robots' ) );
+		add_shortcode( 'cheri_galleries', array( __CLASS__, 'shortcode' ) );
+	}
+
+	/**
+	 * Mark the current request as one of the plugin's full-page screens.
+	 */
+	public static function own_page() {
+		self::$own_page = true;
+		wp_enqueue_style( 'cg-gallery' );
+	}
+
+	public static function register_assets() {
+		wp_register_style( 'cg-fonts', 'https://fonts.googleapis.com/css2?family=Marcellus&family=Open+Sans:wght@400;600&display=swap', array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+		wp_register_style( 'cg-components', CG_URL . 'assets/css/components.css', array( 'cg-fonts' ), CG_VERSION );
+		wp_register_style( 'cg-gallery', CG_URL . 'assets/css/gallery.css', array( 'cg-components' ), CG_VERSION );
+		wp_register_script( 'cg-gallery', CG_URL . 'assets/js/gallery.js', array(), CG_VERSION, true );
+	}
+
+	/**
+	 * On the plugin's own pages, drop the theme's stylesheets so the gallery looks the same
+	 * whatever the theme does. Scripts (analytics etc.) are left alone.
+	 */
+	public static function isolate_styles() {
+		if ( ! self::$own_page ) {
+			return;
+		}
+		$keep = apply_filters( 'cg_keep_styles', array( 'cg-fonts', 'cg-components', 'cg-gallery', 'admin-bar', 'dashicons' ) );
+		foreach ( wp_styles()->queue as $handle ) {
+			if ( ! in_array( $handle, $keep, true ) ) {
+				wp_dequeue_style( $handle );
+			}
+		}
+	}
+
+	/**
+	 * Gallery pages other than public ones are kept out of search engines.
+	 */
+	public static function robots( $robots ) {
+		if ( self::$own_page ) {
+			$robots['noindex']  = true;
+			$robots['nofollow'] = true;
+			if ( is_singular( CG_Galleries::POST_TYPE ) && 'public' === CG_Galleries::setting( get_queried_object_id(), 'visibility' ) ) {
+				unset( $robots['noindex'], $robots['nofollow'] );
+			}
+		}
+		return $robots;
+	}
+
+	/**
+	 * Before the page renders: password form, private links.
+	 */
+	public static function handle_gallery_request() {
+		if ( ! is_singular( CG_Galleries::POST_TYPE ) ) {
+			return;
+		}
+		$gid = get_queried_object_id();
+		self::own_page();
+		nocache_headers();
+
+		if ( isset( $_POST['cg_gallery_password'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( ! isset( $_POST['_cgnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_cgnonce'] ) ), 'cg_pass_' . $gid ) ) {
+				self::$password_error = __( 'The page had been open a while. Please try again.', 'cheri-gallery' );
+				return;
+			}
+			$result = CG_Access::try_password( $gid, wp_unslash( $_POST['cg_gallery_password'] ) ); // phpcs:ignore
+			if ( true === $result ) {
+				wp_safe_redirect( get_permalink( $gid ) );
+				exit;
+			}
+			self::$password_error = $result;
+			return;
+		}
+
+		if ( isset( $_GET['key'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( CG_Access::try_key( $gid, sanitize_text_field( wp_unslash( $_GET['key'] ) ) ) ) { // phpcs:ignore
+				wp_safe_redirect( get_permalink( $gid ) );
+				exit;
+			}
+		}
+	}
+
+	public static function template( $template ) {
+		if ( ! is_singular( CG_Galleries::POST_TYPE ) ) {
+			return $template;
+		}
+		$gid   = get_queried_object_id();
+		$block = CG_Access::view_block( $gid );
+
+		if ( 'password' === $block ) {
+			$GLOBALS['cg_view'] = array(
+				'gallery_id' => $gid,
+				'error'      => self::$password_error,
+			);
+			return cg_template( 'password.php' );
+		}
+		if ( '' !== $block ) {
+			if ( 'draft' === $block ) {
+				status_header( 404 );
+			}
+			$GLOBALS['cg_view'] = array(
+				'gallery_id' => $gid,
+				'reason'     => $block,
+			);
+			return cg_template( 'closed.php' );
+		}
+
+		$GLOBALS['cg_view'] = self::gallery_view( $gid );
+		self::enqueue_gallery_script( $GLOBALS['cg_view'] );
+		return cg_template( 'gallery.php' );
+	}
+
+	/**
+	 * Everything gallery.php needs.
+	 */
+	public static function gallery_view( $gid ) {
+		$s      = CG_Galleries::get( $gid );
+		$photos = CG_Photos::for_gallery( $gid, array( 'include_hidden' => false ) );
+		$by_set = array();
+		foreach ( $s['sets'] as $set ) {
+			$by_set[ $set ] = array();
+		}
+		foreach ( $photos as $p ) {
+			$set = isset( $by_set[ $p->set_name ] ) ? $p->set_name : $s['sets'][0];
+			$by_set[ $set ][] = $p;
+		}
+		$by_set = array_filter( $by_set );
+
+		$cover_id = CG_Galleries::cover_photo( $gid );
+		return array(
+			'gallery_id'      => $gid,
+			'settings'        => $s,
+			'photos'          => $photos,
+			'by_set'          => $by_set,
+			'cover'           => $cover_id ? CG_Photos::get( $cover_id ) : null,
+			'can_album_dl'    => CG_Access::can_download( $gid ),
+			'can_favourite'   => CG_Access::can_favourite( $gid ),
+			'sign_in_for_dl'  => CG_Access::download_needs_sign_in( $gid ),
+			'sign_in_for_fav' => ! is_user_logged_in() && $s['favourites'] && $s['clients'],
+			'login_url'       => CG_Auth::login_url( get_permalink( $gid ) ),
+		);
+	}
+
+	private static function enqueue_gallery_script( array $view ) {
+		$gid = $view['gallery_id'];
+		wp_enqueue_script( 'cg-gallery' );
+		wp_localize_script(
+			'cg-gallery',
+			'CG_GALLERY',
+			array(
+				'id'           => $gid,
+				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'cg_fav_' . $gid ),
+				'canFavourite' => (bool) $view['can_favourite'],
+				'loginUrl'     => $view['login_url'],
+				'protect'      => (bool) $view['settings']['protect'],
+				'shareUrl'     => get_permalink( $gid ),
+				'state'        => $view['can_favourite'] ? CG_Favourites::state( $gid, get_current_user_id() ) : null,
+				'i18n'         => array(
+					'newList'     => __( 'Name your new list', 'cheri-gallery' ),
+					'rename'      => __( 'Rename this list', 'cheri-gallery' ),
+					'confirmDel'  => __( 'Delete this list? The photos stay in the gallery.', 'cheri-gallery' ),
+					'sent'        => __( 'Sent to Cheri', 'cheri-gallery' ),
+					'notSent'     => __( 'Not sent', 'cheri-gallery' ),
+					'photos'      => __( 'photos', 'cheri-gallery' ),
+					'photo'       => __( 'photo', 'cheri-gallery' ),
+					'linkCopied'  => __( 'Link copied', 'cheri-gallery' ),
+					'thanks'      => __( 'Sent. Cheri will take a look.', 'cheri-gallery' ),
+					'error'       => __( 'Something went wrong. Please try again.', 'cheri-gallery' ),
+					'of'          => __( 'of', 'cheri-gallery' ),
+					'intro'       => __( 'Heart a photo to add it to the list that\'s selected. Send a list to Cheri when you\'re ready.', 'cheri-gallery' ),
+					'new'         => __( 'New list', 'cheri-gallery' ),
+					'renameLink'  => __( 'Rename', 'cheri-gallery' ),
+					'delete'      => __( 'Delete', 'cheri-gallery' ),
+					'filter'      => __( 'Show only this list', 'cheri-gallery' ),
+					'note'        => __( 'Note for Cheri', 'cheri-gallery' ),
+					'notePh'      => __( 'e.g. Can the one by the clock tower be black and white?', 'cheri-gallery' ),
+					'send'        => __( 'Send to Cheri', 'cheri-gallery' ),
+					'favs'        => __( 'My favourites', 'cheri-gallery' ),
+					'close'       => __( 'Close', 'cheri-gallery' ),
+					'favourite'   => __( 'Favourite', 'cheri-gallery' ),
+					'download'    => __( 'Download', 'cheri-gallery' ),
+					'slideshow'   => __( 'Slideshow', 'cheri-gallery' ),
+					'previous'    => __( 'Previous photo', 'cheri-gallery' ),
+					'next'        => __( 'Next photo', 'cheri-gallery' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * [cheri_galleries type="wedding" limit="12"] lists galleries marked "Show on galleries page".
+	 */
+	public static function shortcode( $atts ) {
+		$atts = shortcode_atts(
+			array(
+				'type'  => '',
+				'limit' => 24,
+			),
+			$atts,
+			'cheri_galleries'
+		);
+		wp_enqueue_style( 'cg-gallery' );
+
+		$posts = get_posts(
+			array(
+				'post_type'      => CG_Galleries::POST_TYPE,
+				'post_status'    => 'publish',
+				'posts_per_page' => 200,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			)
+		);
+		$cards = array();
+		foreach ( $posts as $post ) {
+			$s = CG_Galleries::get( $post->ID );
+			if ( empty( $s['list_publicly'] ) || 'private' === $s['visibility'] || CG_Galleries::is_expired( $post->ID ) ) {
+				continue;
+			}
+			if ( $atts['type'] && $atts['type'] !== $s['session_type'] ) {
+				continue;
+			}
+			$cards[] = $post;
+			if ( count( $cards ) >= (int) $atts['limit'] ) {
+				break;
+			}
+		}
+		return cg_render( 'parts/album-grid.php', array( 'galleries' => $cards ) );
+	}
+
+	/**
+	 * Cover URL for album cards. Locked galleries show a plain placeholder rather than leaking a photo.
+	 */
+	public static function card_cover_url( $gallery_id ) {
+		$cid = CG_Galleries::cover_photo( $gallery_id );
+		if ( ! $cid ) {
+			return '';
+		}
+		$photo = CG_Photos::get( $cid );
+		if ( ! $photo ) {
+			return '';
+		}
+		if ( CG_Access::can_view( $gallery_id ) ) {
+			return CG_Delivery::photo_url( $photo, 'thumb' );
+		}
+		// Password galleries listed publicly show their cover from the public email copy.
+		return CG_Email::cover_url( $photo );
+	}
+}

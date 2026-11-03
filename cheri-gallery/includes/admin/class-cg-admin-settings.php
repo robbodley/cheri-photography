@@ -1,0 +1,171 @@
+<?php
+/**
+ * Plugin settings: email sender, studio details, image sizes, defaults.
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+class CG_Admin_Settings {
+
+	public static function init() {
+		add_action( 'admin_post_cg_save_settings', array( __CLASS__, 'handle_save' ) );
+		add_action( 'admin_post_cg_test_email', array( __CLASS__, 'handle_test_email' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'mail_notice' ) );
+	}
+
+	/**
+	 * Remind Cheri to set up an email sender until one is detected.
+	 */
+	public static function mail_notice() {
+		$screen = get_current_screen();
+		if ( ! $screen || ! CG_Admin::is_our_screen() || self::has_mail_plugin() ) {
+			return;
+		}
+		echo '<div class="notice notice-warning"><p>' . wp_kses_post(
+			sprintf(
+				/* translators: %s: settings link */
+				__( '<strong>Cheri Gallery:</strong> no email sender is set up, so gallery emails and sign-in links may land in spam. Install the free WP Mail SMTP plugin and connect your photome@ mailbox. <a href="%s">Details</a>', 'cheri-gallery' ),
+				esc_url( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-settings#email' ) )
+			)
+		) . '</p></div>';
+	}
+
+	public static function has_mail_plugin() {
+		return defined( 'WPMS_PLUGIN_VER' ) || class_exists( 'WPMailSMTP\Core' ) || class_exists( 'Postman' ) || function_exists( 'fluentSmtpInit' ) || defined( 'FLUENTMAIL' ) || class_exists( 'EasyWPSMTP' ) || has_action( 'phpmailer_init', 'brevo_phpmailer_init' );
+	}
+
+	public static function page() {
+		if ( ! current_user_can( CG_CAP ) ) {
+			wp_die( esc_html__( 'Sorry, you can\'t do that.', 'cheri-gallery' ) );
+		}
+		$s = CG_Settings::all();
+		?>
+		<div class="wrap cg-wrap">
+			<?php CG_Admin::notice_from_query(); ?>
+			<form class="cg-admin" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<?php wp_nonce_field( 'cg_save_settings' ); ?>
+				<input type="hidden" name="action" value="cg_save_settings">
+				<section class="ch-panel cg-narrow-panel">
+					<div class="ch-panel__head">
+						<h1 class="ch-panel__title"><?php esc_html_e( 'Cheri Gallery settings', 'cheri-gallery' ); ?></h1>
+						<button class="ch-btn ch-btn--sm" type="submit"><?php esc_html_e( 'Save', 'cheri-gallery' ); ?></button>
+					</div>
+					<div class="ch-panel__body ch-set">
+						<div class="ch-set__group" id="email">
+							<p class="ch-set__h"><?php esc_html_e( 'Email', 'cheri-gallery' ); ?></p>
+							<div class="cg-grid2">
+								<label class="ch-field"><span class="ch-field__label"><?php esc_html_e( 'Send from (and replies to)', 'cheri-gallery' ); ?></span><input class="ch-field__input" type="email" name="from_email" value="<?php echo esc_attr( $s['from_email'] ); ?>" required></label>
+								<label class="ch-field"><span class="ch-field__label"><?php esc_html_e( 'Sender name', 'cheri-gallery' ); ?></span><input class="ch-field__input" name="from_name" value="<?php echo esc_attr( $s['from_name'] ); ?>" required></label>
+							</div>
+							<label class="ch-field"><span class="ch-field__label"><?php esc_html_e( 'Tell me about new favourites at', 'cheri-gallery' ); ?></span><input class="ch-field__input" type="email" name="notify_email" value="<?php echo esc_attr( $s['notify_email'] ); ?>" required></label>
+							<?php if ( self::has_mail_plugin() ) : ?>
+								<p class="cg-hint">✓ <?php esc_html_e( 'An email sender plugin is active.', 'cheri-gallery' ); ?></p>
+							<?php else : ?>
+								<div class="cg-callout">
+									<p><strong><?php esc_html_e( 'Set up an email sender (one-off, about 20 minutes)', 'cheri-gallery' ); ?></strong></p>
+									<ol>
+										<li><?php esc_html_e( 'Plugins → Add New → install and activate "WP Mail SMTP".', 'cheri-gallery' ); ?></li>
+										<li><?php esc_html_e( 'In its setup wizard, choose the service that hosts your photome@ mailbox (Google, Microsoft/Outlook, or "Other SMTP" with your host\'s details). If that won\'t connect, pick Brevo (free for 300 emails a day).', 'cheri-gallery' ); ?></li>
+										<li><?php esc_html_e( 'Add the SPF and DKIM records it shows you at your domain provider.', 'cheri-gallery' ); ?></li>
+										<li><?php esc_html_e( 'Send a test below.', 'cheri-gallery' ); ?></li>
+									</ol>
+								</div>
+							<?php endif; ?>
+						</div>
+
+						<div class="ch-set__group">
+							<p class="ch-set__h"><?php esc_html_e( 'Studio details (email footer)', 'cheri-gallery' ); ?></p>
+							<div class="cg-grid2">
+								<label class="ch-field"><span class="ch-field__label"><?php esc_html_e( 'Website', 'cheri-gallery' ); ?></span><input class="ch-field__input" type="url" name="website_url" value="<?php echo esc_attr( $s['website_url'] ); ?>"></label>
+								<label class="ch-field"><span class="ch-field__label"><?php esc_html_e( 'Instagram link', 'cheri-gallery' ); ?></span><input class="ch-field__input" type="url" name="instagram_url" value="<?php echo esc_attr( $s['instagram_url'] ); ?>" placeholder="https://instagram.com/…"></label>
+							</div>
+							<label class="ch-field"><span class="ch-field__label"><?php esc_html_e( 'Location', 'cheri-gallery' ); ?></span><input class="ch-field__input" name="location" value="<?php echo esc_attr( $s['location'] ); ?>"></label>
+						</div>
+
+						<div class="ch-set__group">
+							<p class="ch-set__h"><?php esc_html_e( 'Photos', 'cheri-gallery' ); ?></p>
+							<label class="ch-toggle">
+								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'Default watermark for new galleries', 'cheri-gallery' ); ?></span></span>
+								<select class="ch-select" name="default_watermark">
+									<?php foreach ( CG_Images::watermark_styles() as $key => $label ) : ?>
+										<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $s['default_watermark'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</label>
+							<label class="ch-toggle">
+								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'Web size (long edge, px)', 'cheri-gallery' ); ?></span><span class="ch-toggle__hint"><?php esc_html_e( 'Used in the lightbox and for web-size downloads', 'cheri-gallery' ); ?></span></span>
+								<input class="ch-select" type="number" min="1200" max="4096" step="1" name="web_size" value="<?php echo esc_attr( $s['web_size'] ); ?>">
+							</label>
+							<label class="ch-toggle">
+								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'JPEG quality', 'cheri-gallery' ); ?></span></span>
+								<input class="ch-select" type="number" min="60" max="95" name="jpeg_quality" value="<?php echo esc_attr( $s['jpeg_quality'] ); ?>">
+							</label>
+						</div>
+
+						<div class="ch-set__group">
+							<p class="ch-set__h"><?php esc_html_e( 'Pages', 'cheri-gallery' ); ?></p>
+							<p class="cg-hint">
+								<?php esc_html_e( 'Client sign in:', 'cheri-gallery' ); ?> <a href="<?php echo esc_url( CG_Auth::login_url() ); ?>" target="_blank"><?php echo esc_html( CG_Auth::login_url() ); ?></a><br>
+								<?php esc_html_e( 'My galleries:', 'cheri-gallery' ); ?> <a href="<?php echo esc_url( CG_Auth::account_url() ); ?>" target="_blank"><?php echo esc_html( CG_Auth::account_url() ); ?></a><br>
+								<?php esc_html_e( 'List public galleries on any page with the shortcode', 'cheri-gallery' ); ?> <code>[cheri_galleries]</code> <?php esc_html_e( 'or', 'cheri-gallery' ); ?> <code>[cheri_galleries type="portrait"]</code>.
+							</p>
+						</div>
+					</div>
+				</section>
+			</form>
+
+			<form class="cg-admin" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<?php wp_nonce_field( 'cg_test_email' ); ?>
+				<input type="hidden" name="action" value="cg_test_email">
+				<section class="ch-panel cg-narrow-panel">
+					<div class="ch-panel__body ch-row" style="justify-content:space-between">
+						<span><?php echo esc_html( sprintf( /* translators: %s: email */ __( 'Send a test email to %s', 'cheri-gallery' ), $s['from_email'] ) ); ?></span>
+						<button class="ch-btn ch-btn--sm ch-btn--outline" type="submit"><?php esc_html_e( 'Send test', 'cheri-gallery' ); ?></button>
+					</div>
+				</section>
+			</form>
+		</div>
+		<?php
+	}
+
+	public static function handle_save() {
+		if ( ! current_user_can( CG_CAP ) ) {
+			wp_die( esc_html__( 'Sorry, you can\'t do that.', 'cheri-gallery' ) );
+		}
+		check_admin_referer( 'cg_save_settings' );
+		$p      = wp_unslash( $_POST ); // phpcs:ignore
+		$styles = CG_Images::watermark_styles();
+		$before = CG_Settings::all();
+		$values = array(
+			'from_email'        => is_email( $p['from_email'] ?? '' ) ? sanitize_email( $p['from_email'] ) : $before['from_email'],
+			'from_name'         => sanitize_text_field( $p['from_name'] ?? $before['from_name'] ),
+			'notify_email'      => is_email( $p['notify_email'] ?? '' ) ? sanitize_email( $p['notify_email'] ) : $before['notify_email'],
+			'website_url'       => esc_url_raw( $p['website_url'] ?? '' ),
+			'instagram_url'     => esc_url_raw( $p['instagram_url'] ?? '' ),
+			'location'          => sanitize_text_field( $p['location'] ?? '' ),
+			'default_watermark' => isset( $styles[ $p['default_watermark'] ?? '' ] ) ? $p['default_watermark'] : 'off',
+			'web_size'          => min( 4096, max( 1200, absint( $p['web_size'] ?? 2048 ) ) ),
+			'jpeg_quality'      => min( 95, max( 60, absint( $p['jpeg_quality'] ?? 86 ) ) ),
+		);
+		CG_Settings::update( $values );
+		wp_safe_redirect( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-settings&cg_msg=settings_saved' ) );
+		exit;
+	}
+
+	public static function handle_test_email() {
+		if ( ! current_user_can( CG_CAP ) ) {
+			wp_die( esc_html__( 'Sorry, you can\'t do that.', 'cheri-gallery' ) );
+		}
+		check_admin_referer( 'cg_test_email' );
+		$html = cg_render(
+			'email-layout.php',
+			array(
+				'settings' => CG_Settings::all(),
+				'content'  => '<p style="margin:0;">' . esc_html__( 'This is a test from Cheri Gallery. If it arrived in your inbox (not spam), emails are set up correctly.', 'cheri-gallery' ) . '</p>',
+			)
+		);
+		$ok   = CG_Email::send( CG_Settings::get( 'from_email' ), __( 'Cheri Gallery test email', 'cheri-gallery' ), $html );
+		wp_safe_redirect( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-settings&cg_msg=' . ( $ok ? 'email_sent' : 'link_failed' ) ) );
+		exit;
+	}
+}

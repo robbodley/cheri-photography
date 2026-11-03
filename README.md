@@ -1,0 +1,67 @@
+# Cheri Gallery
+
+Client galleries for **Cheri Photography**: a WordPress plugin that replaces Pixieset for delivering photos, styled to match the Cheri Photography website (Marcellus and Open Sans, tan and cream, the Cheri logo and C-and-heart mark).
+
+The plugin is in [`cheri-gallery/`](cheri-gallery/). The look comes from the Cheri Gallery design system.
+
+## What it does
+
+**For you (WordPress admin → Cheri Gallery)**
+
+- **Galleries**: one per client job. Upload photos by drag and drop, split them into sets (Ceremony, Portraits…), pick the cover, and hide or block downloads on single photos. You can also select many photos at once.
+- **Who can see it**: Public, Password (case-sensitive, made for you from the couple's initials and date, e.g. `er1505`) or Private (only from a secret link or by the signed-in client). You can set a closing date.
+- **Downloads**: separate switches for *whole album* (zip) and *single photos*; full resolution or web size; signed-in client only or anyone who can view.
+- **Watermarks**: Off, Corner, Centre or Tiled, drawn into the photos themselves so screenshots carry them. Originals stay clean and private.
+- **Clients**: add a client with a name and email, see their galleries, last visit and every favourites list, with **Copy filenames** for Lightroom. A "New" badge appears when someone sends a list.
+- **Share**: a branded "your photos are ready" email with a live preview. It goes to you by default so you can forward it, with templates, the password box, the client sign-in link and a test send.
+
+**For your clients**
+
+- A full-screen cover, then a masonry photo grid with set tabs, a lightbox (swipe on phones), a slideshow and share.
+- **Sign in by email link**: no password to remember. Signed in, they see **My galleries** at `/my-galleries/`.
+- **Favourites lists**: heart photos into named lists ("Album picks", "Prints for Mum"), add a note, and **Send to Cheri**. You get an email.
+
+## Installing
+
+1. Download `cheri-gallery.zip` (or zip the `cheri-gallery` folder).
+2. In WordPress: **Plugins → Add New → Upload Plugin**, choose the zip, then **Activate**.
+3. Go to **Cheri Gallery → Settings**: check the email address (`photome@cheri.photography`), add your Instagram link, and press **Save**.
+4. **Set up an email sender** (needed for sign-in links and gallery emails): install **WP Mail SMTP**, connect the mailbox that hosts photome@cheri.photography, add the SPF/DKIM records it gives you, and use **Send test** on the settings page.
+5. If gallery links show "Page not found", go to **Settings → Permalinks** and press **Save** once.
+
+Requirements: WordPress 6.2+, PHP 7.4+ with the GD or Imagick, zip and exif extensions (standard on most hosts). Uploads larger than your host's `upload_max_filesize` are refused with a clear message; ask your host to raise the limit if full-resolution JPEGs are bigger.
+
+## Pages and addresses
+
+| Address | What |
+|---|---|
+| `/gallery/<name>/` | A client gallery |
+| `/client-login/` | Client sign-in (email link) |
+| `/my-galleries/` | A signed-in client's galleries and favourites |
+| `[cheri_galleries]` | Shortcode listing galleries marked "Show on the galleries page" (`type="portrait"` to filter) |
+
+## How the protection works
+
+- Photos are stored in `wp-content/uploads/cheri-gallery/` under random file names, with an `.htaccess` that blocks direct access. Every photo and download goes through WordPress, which checks the gallery's visibility, the client's sign-in and the download switches first.
+- Password and private-link access is remembered for 30 days with a signed cookie. Changing the password or private link locks out everyone using the old one. Password attempts are limited to 10 per 10 minutes.
+- Gallery passwords are stored readable, because they go into the share email (as Pixieset does). Client accounts have no passwords at all: they sign in with one-time links that expire after an hour.
+- Galleries are kept out of search engines and sitemaps, except public ones.
+- The cover photo chosen for an email gets a public 1200px copy, because email programs can't sign in.
+
+## Not built yet
+
+- Download packs and payments (Stripe): planned next.
+- Drag-to-reorder photos (photos show in upload order).
+- Wedding album selection with a set number of photos (favourites lists cover this for now).
+
+## Testing status
+
+Every PHP file passes a syntax check. The real templates, CSS, JavaScript and image and watermark code were rendered and clicked through in a browser with sample photos. That included the gallery, lightbox, favourites drawer, password page, sign-in, My galleries, the email, and the admin photo manager, settings, clients and Share screens. **It has not yet been run inside a live WordPress install**, so please try it on a staging site (or a fresh test install) before your real galleries. The checklist:
+
+1. Activate; create a client; create a gallery, pick the client, upload 10–20 photos into two sets; publish.
+2. Open the gallery link in a private window: the password page appears; a wrong password gives the error; the right one opens it.
+3. Try each watermark style and check the photos change.
+4. Share → Send test to me: the email arrives (not in spam) and its links work.
+5. As the client (use your own second email): sign in by link, heart photos, make a second list, add a note, send. The alert email arrives and the list shows under Clients with "New".
+6. Download a photo and the whole album; then block a photo's download and check it's left out.
+7. Set the gallery to Private and check only the private link (or the signed-in client) opens it.
