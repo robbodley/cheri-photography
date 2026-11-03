@@ -15,6 +15,14 @@ $sets  = array_keys( $v['by_set'] );
 $body_class = $s['protect'] ? 'cg-protect' : '';
 include cg_template( 'parts/page-start.php' );
 ?>
+<?php if ( CG_Access::is_admin() && 'public' !== $s['visibility'] ) : ?>
+	<p class="ch-adminbar">
+		<?php esc_html_e( 'You\'re seeing every photo because you\'re signed in as the photographer.', 'cheri-gallery' ); ?>
+		<?php if ( 'password' === $s['visibility'] ) : ?>
+			<a href="<?php echo esc_url( add_query_arg( 'cg_preview', 'locked', get_permalink( $gid ) ) ); ?>"><?php esc_html_e( 'Preview the locked page visitors see', 'cheri-gallery' ); ?></a>
+		<?php endif; ?>
+	</p>
+<?php endif; ?>
 <section class="ch-cover" id="cg-cover">
 	<?php if ( $v['cover'] ) : ?>
 		<div class="ch-cover__img"><img src="<?php echo esc_url( CG_Delivery::photo_url( $v['cover'], 'web' ) ); ?>" alt="" fetchpriority="high" style="object-position: <?php echo esc_attr( CG_Galleries::cover_css_position( $gid ) ); ?>"></div>

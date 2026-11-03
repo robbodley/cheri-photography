@@ -84,7 +84,8 @@ class CG_Delivery {
 			self::deny( 404 );
 		}
 		$gid = (int) $photo->gallery_id;
-		if ( ! CG_Access::can_view( $gid ) || ( $photo->hidden && ! CG_Access::is_admin() ) ) {
+		$locked_cover = 'web' === $size && CG_Access::is_locked_cover( $photo );
+		if ( ( ! CG_Access::can_view( $gid ) && ! $locked_cover ) || ( $photo->hidden && ! CG_Access::is_admin() ) ) {
 			self::deny();
 		}
 		$plain = ! empty( $_GET['plain'] ) && CG_Access::is_admin(); // phpcs:ignore WordPress.Security.NonceVerification

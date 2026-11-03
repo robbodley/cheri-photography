@@ -54,6 +54,17 @@ class CG_Access {
 	}
 
 	/**
+	 * The cover of a password gallery is shown on its locked page, so it can be seen before the
+	 * password. Only that one photo, only for password (not private or closed) galleries.
+	 */
+	public static function is_locked_cover( $photo ) {
+		$gid = (int) $photo->gallery_id;
+		return 'password' === self::view_block( $gid )
+			&& (int) CG_Galleries::cover_photo( $gid ) === (int) $photo->id
+			&& ! $photo->hidden;
+	}
+
+	/**
 	 * Downloads: whole album or a single photo.
 	 *
 	 * @param int         $gallery_id Gallery.

@@ -2,6 +2,11 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.7.0
+
+- A password-protected gallery now opens on its full-screen cover photo with the names and date, and the password box where "View gallery" normally is (plus "Client? Sign in instead"). The other photos stay locked until the password is entered or the client signs in.
+- When you're signed in as the photographer, a thin bar on locked galleries explains you're seeing every photo, with a link to preview the locked page visitors see.
+
 ## 0.6.0
 
 - Easier linking of clients and galleries. On a gallery, each client is listed with a Remove button, and "+ Add a client…" adds another with one pick (no more Ctrl/Cmd-clicking).

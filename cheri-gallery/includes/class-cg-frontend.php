@@ -154,10 +154,15 @@ class CG_Frontend {
 		$gid   = get_queried_object_id();
 		$block = CG_Access::view_block( $gid );
 
-		if ( 'password' === $block ) {
+		// The photographer can preview the locked cover page (?cg_preview=locked).
+		$preview = CG_Access::is_admin() && isset( $_GET['cg_preview'] ) && 'password' === CG_Galleries::setting( $gid, 'visibility' ); // phpcs:ignore WordPress.Security.NonceVerification
+
+		if ( 'password' === $block || $preview ) {
+			self::set_page_kind( 'gallery' ); // Same layout as the gallery: cover photo to the top.
 			$GLOBALS['cg_view'] = array(
 				'gallery_id' => $gid,
 				'error'      => self::$password_error,
+				'preview'    => $preview,
 			);
 			return cg_template( 'password.php' );
 		}
