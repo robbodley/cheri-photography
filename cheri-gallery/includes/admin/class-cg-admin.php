@@ -89,7 +89,7 @@ class CG_Admin {
 			'link_failed'    => array( 'error', __( 'The email could not be sent. Check your email sender (WP Mail SMTP) is set up.', 'cheri-gallery' ) ),
 			'settings_saved' => array( 'success', __( 'Settings saved.', 'cheri-gallery' ) ),
 			'email_sent'     => array( 'success', __( 'Gallery email sent.', 'cheri-gallery' ) ),
-			'update_found'   => array( 'warning', __( 'A new version of Cheri Gallery is ready. Go to Plugins to update.', 'cheri-gallery' ) ),
+			'update_found'   => array( 'warning', __( 'A new version of Cheri Gallery is ready. Press "Update now" in the Updates panel below to install it.', 'cheri-gallery' ) ),
 			'up_to_date'     => array( 'success', __( 'Cheri Gallery is up to date.', 'cheri-gallery' ) ),
 		);
 		if ( isset( $map[ $msg ] ) ) {

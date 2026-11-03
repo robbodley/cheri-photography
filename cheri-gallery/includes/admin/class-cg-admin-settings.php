@@ -153,18 +153,29 @@ class CG_Admin_Settings {
 						<p>
 							<?php
 							/* translators: %s: version */
-							echo esc_html( sprintf( __( 'Installed: version %s', 'cheri-gallery' ), CG_VERSION ) );
-							echo '<br>';
+							echo '<strong>' . esc_html( sprintf( __( 'On this website: version %s', 'cheri-gallery' ), CG_VERSION ) ) . '</strong><br>';
 							if ( is_wp_error( $release ) ) {
-								echo esc_html( __( 'Latest:', 'cheri-gallery' ) . ' ' . $release->get_error_message() );
+								echo '<span class="cg-error">' . esc_html( $release->get_error_message() ) . '</span>';
 							} else {
 								/* translators: 1: version, 2: date */
-								echo esc_html( sprintf( __( 'Latest on GitHub: version %1$s (%2$s)', 'cheri-gallery' ), $release['version'], $release['published'] ? mysql2date( 'j M Y', $release['published'] ) : '' ) );
+								echo esc_html( sprintf( __( 'Newest available: version %1$s (released %2$s)', 'cheri-gallery' ), $release['version'], $release['published'] ? mysql2date( 'j M Y', $release['published'] ) : '' ) );
+								if ( ! empty( $release['checked'] ) ) {
+									/* translators: %s: time ago */
+									echo '<br><span class="cg-hint">' . esc_html( sprintf( __( 'Checked %s ago', 'cheri-gallery' ), human_time_diff( (int) $release['checked'] ) ) ) . '</span>';
+								}
 							}
 							?>
 						</p>
 						<?php if ( $update ) : ?>
-							<p><a class="ch-btn ch-btn--sm" href="<?php echo esc_url( admin_url( 'plugins.php?plugin_status=upgrade' ) ); ?>"><?php esc_html_e( 'Go to the update', 'cheri-gallery' ); ?></a></p>
+							<?php if ( current_user_can( 'update_plugins' ) ) : ?>
+								<p><a class="ch-btn" href="<?php echo esc_url( CG_Updater::update_url() ); ?>">
+									<?php
+									/* translators: %s: version */
+									echo esc_html( sprintf( __( 'Update to %s now', 'cheri-gallery' ), $release['version'] ) );
+									?>
+								</a></p>
+								<p class="cg-hint"><?php esc_html_e( 'Checking only looks for a new version; this button installs it. It takes a few seconds and your photos, clients and favourites aren\'t touched.', 'cheri-gallery' ); ?></p>
+							<?php endif; ?>
 							<?php if ( $release['notes'] ) : ?>
 								<div class="cg-callout"><p><strong><?php esc_html_e( 'What\'s new', 'cheri-gallery' ); ?></strong></p><?php echo wp_kses_post( wpautop( esc_html( $release['notes'] ) ) ); ?></div>
 							<?php endif; ?>

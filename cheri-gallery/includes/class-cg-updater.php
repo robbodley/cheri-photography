@@ -33,7 +33,8 @@ class CG_Updater {
 	private static function headers( $accept = 'application/vnd.github+json' ) {
 		$h     = array(
 			'Accept'     => $accept,
-			'User-Agent' => 'Cheri-Gallery-Updater',
+			'User-Agent'    => 'Cheri-Gallery-Updater',
+			'Cache-Control' => 'no-cache',
 		);
 		$token = trim( (string) get_option( self::TOKEN_OPT, '' ) );
 		if ( $token ) {
@@ -53,20 +54,24 @@ class CG_Updater {
 			return $cached;
 		}
 		$res = wp_remote_get(
-			'https://api.github.com/repos/' . self::REPO . '/releases/latest',
+			'https://api.github.com/repos/' . self::REPO . '/releases/latest?nocache=' . time(),
 			array(
 				'timeout' => 15,
 				'headers' => self::headers(),
 			)
 		);
 		if ( is_wp_error( $res ) ) {
-			return $res;
+			/* translators: %s: error */
+			return new WP_Error( 'cg_github', sprintf( __( 'Your website couldn\'t reach GitHub: %s', 'cheri-gallery' ), $res->get_error_message() ) );
 		}
 		$code = wp_remote_retrieve_response_code( $res );
 		if ( 404 === $code ) {
 			return new WP_Error( 'cg_no_release', __( 'No releases published on GitHub yet.', 'cheri-gallery' ) );
 		}
 		if ( 200 !== $code ) {
+			if ( 403 === $code || 429 === $code ) {
+				return new WP_Error( 'cg_github', __( 'GitHub is limiting requests from your web host right now. Try again in an hour, or add a GitHub token below.', 'cheri-gallery' ) );
+			}
 			/* translators: %d: HTTP status */
 			return new WP_Error( 'cg_github', sprintf( __( 'GitHub answered with status %d. If the repository is private, add a token in Settings.', 'cheri-gallery' ), $code ) );
 		}
@@ -92,8 +97,17 @@ class CG_Updater {
 			'download'  => (string) $asset['browser_download_url'],
 			'url'       => (string) ( $data['html_url'] ?? 'https://github.com/' . self::REPO . '/releases' ),
 		);
+		$release['checked'] = time();
 		set_site_transient( self::CACHE, $release, 6 * HOUR_IN_SECONDS );
 		return $release;
+	}
+
+	/**
+	 * One-click link that installs the update (WordPress's own updater, with its security check).
+	 */
+	public static function update_url() {
+		$file = self::basename();
+		return wp_nonce_url( self_admin_url( 'update.php?action=upgrade-plugin&plugin=' . rawurlencode( $file ) ), 'upgrade-plugin_' . $file );
 	}
 
 	public static function has_update( $release = null ) {

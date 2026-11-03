@@ -95,3 +95,4 @@
 
 .ch-sh__mark { width: 110px; height: auto; }
 .ch-list__meta { display: block; }
+.cg-error { color: var(--ch-danger); }
