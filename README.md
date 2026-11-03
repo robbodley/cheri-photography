@@ -43,9 +43,8 @@ The plugin updates itself from this repository's GitHub Releases, like any plugi
 ### Publishing an update (developer)
 
 1. Change the code and bump the version in **both** places in `cheri-gallery/cheri-gallery.php` (the `Version:` header and `CG_VERSION`).
-2. Commit, then push an annotated tag with the release notes as its message:
-   `git tag -a v0.2.1 -m "What changed"` then `git push origin v0.2.1`
-3. The **Release plugin** GitHub Action checks that the tag matches the version, syntax-checks the PHP, builds `cheri-gallery.zip` and publishes the release. Sites pick it up on their next check.
+2. Add a `## x.y.z` section to `CHANGELOG.md`. It becomes the release notes shown in WordPress.
+3. Get it onto the repository's default branch (push or merge a pull request). The **Release plugin** GitHub Action checks the two version numbers match, syntax-checks the PHP, builds `cheri-gallery.zip` and publishes release `vx.y.z`. If that version is already released it does nothing, so ordinary pushes without a version bump never publish anything.
 
 ## Pages and addresses
 

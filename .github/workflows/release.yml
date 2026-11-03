@@ -1,44 +1,79 @@
-# Publishes a plugin update. Push a tag like v0.2.1 and this builds cheri-gallery.zip and
-# attaches it to a GitHub release. Sites running Cheri Gallery see the update within 12 hours
-# (or straight away with Settings → Check for updates now).
+# Publishes a plugin update whenever the default branch has a plugin version that isn't released yet.
+#
+# To ship an update: change the code, bump the version in BOTH places in cheri-gallery/cheri-gallery.php
+# (the "Version:" header and CG_VERSION), add a "## x.y.z" section to CHANGELOG.md, and get it onto the
+# default branch. This workflow then builds cheri-gallery.zip and publishes release vx.y.z. Sites running
+# Cheri Gallery see the update within 12 hours, or straight away with Settings → Check for updates now.
 name: Release plugin
 
 on:
   push:
-    tags:
-      - 'v*'
+    paths:
+      - 'cheri-gallery/**'
+      - 'CHANGELOG.md'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
+    if: github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check the tag matches the plugin version
+      - name: Read the plugin version
+        id: version
         run: |
-          tag="${GITHUB_REF_NAME#v}"
           header=$(grep -m1 -E '^\s*\*\s*Version:' cheri-gallery/cheri-gallery.php | sed -E 's/.*Version:\s*//' | tr -d '[:space:]')
           constant=$(grep -m1 "define( 'CG_VERSION'" cheri-gallery/cheri-gallery.php | sed -E "s/.*'CG_VERSION', '([^']+)'.*/\1/")
-          echo "tag=$tag header=$header constant=$constant"
-          if [ "$tag" != "$header" ] || [ "$tag" != "$constant" ]; then
-            echo "::error::Tag v$tag doesn't match the plugin version (header $header, CG_VERSION $constant). Update both in cheri-gallery.php."
+          echo "header=$header constant=$constant"
+          if [ "$header" != "$constant" ]; then
+            echo "::error::The Version header ($header) and CG_VERSION ($constant) in cheri-gallery.php must match."
             exit 1
           fi
+          echo "version=$header" >> "$GITHUB_OUTPUT"
 
-      - name: Syntax-check every PHP file
-        run: find cheri-gallery -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
-
-      - name: Build cheri-gallery.zip
-        run: git archive --format=zip --output=cheri-gallery.zip HEAD cheri-gallery
-
-      - name: Publish the release
+      - name: Skip if this version is already released
+        id: exists
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" cheri-gallery.zip \
-            --title "Cheri Gallery $GITHUB_REF_NAME" \
-            --notes-file <(git tag -l --format='%(contents)' "$GITHUB_REF_NAME" | sed '/^-----BEGIN/,$d') \
+          if gh release view "v${{ steps.version.outputs.version }}" > /dev/null 2>&1; then
+            echo "Version ${{ steps.version.outputs.version }} is already released; bump the version to publish an update."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Syntax-check every PHP file
+        if: steps.exists.outputs.skip != 'true'
+        run: find cheri-gallery -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+
+      - name: Build cheri-gallery.zip
+        if: steps.exists.outputs.skip != 'true'
+        run: git archive --format=zip --output=cheri-gallery.zip HEAD cheri-gallery
+
+      - name: Release notes from CHANGELOG.md
+        if: steps.exists.outputs.skip != 'true'
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          awk -v v="$v" '$0 ~ "^## "v"( |$)" {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md || true
+          if [ ! -s notes.md ]; then git log -1 --format=%B > notes.md; fi
+          cat notes.md
+
+      - name: Publish the release
+        if: steps.exists.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          gh release create "v$v" cheri-gallery.zip \
+            --target "$GITHUB_SHA" \
+            --title "Cheri Gallery $v" \
+            --notes-file notes.md \
             --latest
