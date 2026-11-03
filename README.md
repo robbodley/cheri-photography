@@ -57,7 +57,7 @@ The plugin updates itself from this repository's GitHub Releases, like any plugi
 
 ## Look and layout
 
-Gallery, sign-in and My galleries pages use your website's own header and footer by default (Settings → Pages → "Use the website's header and footer"). All gallery styles are scoped under a `.cg-page` wrapper and load after the theme's, so theme button and heading styles don't change the gallery. The stylesheet the site loads, `assets/css/front.css`, is generated from `components.css` + `gallery.css`: after editing those, run `python3 tools/build-front-css.py`.
+Gallery, sign-in and My galleries pages use the gallery's own slim header (Cheri logo, My galleries / Sign out) and your website's footer by default; each can be switched under Settings → Pages. All gallery styles are scoped under a `.cg-page` wrapper and load after the theme's, so theme button and heading styles don't change the gallery. The stylesheet the site loads, `assets/css/front.css`, is generated from `components.css` + `gallery.css`: after editing those, run `python3 tools/build-front-css.py`.
 
 ## How the protection works
 

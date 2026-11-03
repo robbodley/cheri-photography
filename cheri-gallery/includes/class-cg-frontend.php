@@ -16,7 +16,7 @@ class CG_Frontend {
 	public static function init() {
 		add_action( 'template_redirect', array( __CLASS__, 'handle_gallery_request' ), 5 );
 		add_filter( 'template_include', array( __CLASS__, 'template' ), 99 );
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ), 5 );
+		add_action( 'init', array( __CLASS__, 'register_assets' ) ); // Early: the gallery page localizes the script before wp_head.
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_own_page' ), 100 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'isolate_styles' ), 9999 );
 		add_filter( 'wp_robots', array( __CLASS__, 'robots' ) );
@@ -31,10 +31,15 @@ class CG_Frontend {
 	}
 
 	/**
-	 * Use the website's header and footer around gallery pages (Settings; on by default).
+	 * Header and footer around the plugin's pages: the website's own (theme) or the gallery's.
+	 * Settings → Pages; by default the gallery's slim logo header and the website's footer.
 	 */
-	public static function use_theme_layout() {
-		return (bool) apply_filters( 'cg_use_theme_layout', (bool) CG_Settings::get( 'theme_layout' ) );
+	public static function theme_header() {
+		return (bool) apply_filters( 'cg_theme_header', 'theme' === CG_Settings::get( 'site_header' ) );
+	}
+
+	public static function theme_footer() {
+		return (bool) apply_filters( 'cg_theme_footer', 'theme' === CG_Settings::get( 'site_footer' ) );
 	}
 
 	/**
@@ -47,6 +52,9 @@ class CG_Frontend {
 	}
 
 	public static function register_assets() {
+		if ( wp_script_is( 'cg-gallery', 'registered' ) ) {
+			return;
+		}
 		wp_register_style( 'cg-fonts', 'https://fonts.googleapis.com/css2?family=Marcellus&family=Open+Sans:wght@400;600&display=swap', array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
 		// front.css = components.css + gallery.css, scoped under .cg-page (tools/build-front-css.py).
 		wp_register_style( 'cg-gallery', CG_URL . 'assets/css/front.css', array( 'cg-fonts' ), CG_VERSION );
@@ -58,7 +66,8 @@ class CG_Frontend {
 	 * whatever the theme does. Scripts (analytics etc.) are left alone.
 	 */
 	public static function isolate_styles() {
-		if ( ! self::$own_page || self::use_theme_layout() ) {
+		// Theme styles are only dropped when neither the theme's header nor footer is shown.
+		if ( ! self::$own_page || self::theme_header() || self::theme_footer() ) {
 			return;
 		}
 		$keep = apply_filters( 'cg_keep_styles', array( 'cg-fonts', 'cg-gallery', 'admin-bar', 'dashicons' ) );
@@ -179,6 +188,7 @@ class CG_Frontend {
 
 	private static function enqueue_gallery_script( array $view ) {
 		$gid = $view['gallery_id'];
+		self::register_assets(); // Safe to repeat; makes sure the handle exists before localizing.
 		wp_enqueue_script( 'cg-gallery' );
 		wp_localize_script(
 			'cg-gallery',

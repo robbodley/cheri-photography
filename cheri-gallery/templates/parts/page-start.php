@@ -2,18 +2,17 @@
 /**
  * Opening of the plugin's full pages (gallery, password, sign in, My galleries).
  *
- * By default the website's own header is used (get_header), so galleries sit inside the
- * Cheri Photography site. Settings → "Use the website's header and footer" switches to a
- * standalone page instead.
+ * Header: the gallery's slim Cheri logo bar (default) or the website's own header (get_header).
+ * Settings → Pages.
  *
  * @var string $body_class Extra classes for the wrapper.
  */
 
 defined( 'ABSPATH' ) || exit;
 $body_class = isset( $body_class ) ? $body_class : '';
-$cg_themed  = CG_Frontend::use_theme_layout();
+$cg_settings = CG_Settings::all();
 
-if ( $cg_themed ) {
+if ( CG_Frontend::theme_header() ) {
 	get_header();
 } else {
 	?><!doctype html>
@@ -28,4 +27,17 @@ if ( $cg_themed ) {
 	<?php
 }
 ?>
-<div class="cg-page<?php echo $cg_themed ? ' cg-themed' : ''; ?> <?php echo esc_attr( $body_class ); ?>" id="cg-root">
+<div class="cg-page cg-themed <?php echo esc_attr( $body_class ); ?>" id="cg-root">
+<?php if ( ! CG_Frontend::theme_header() ) : ?>
+<header class="ch-sitebar">
+	<a class="ch-sitebar__logo" href="<?php echo esc_url( $cg_settings['website_url'] ); ?>"><img src="<?php echo esc_url( CG_URL . 'assets/img/cheri-logo.png' ); ?>" alt="<?php echo esc_attr( $cg_settings['from_name'] ); ?>" width="120" height="60"></a>
+	<nav class="ch-sitebar__links" aria-label="<?php esc_attr_e( 'Client', 'cheri-gallery' ); ?>">
+		<?php if ( is_user_logged_in() ) : ?>
+			<a href="<?php echo esc_url( CG_Auth::account_url() ); ?>"><?php esc_html_e( 'My galleries', 'cheri-gallery' ); ?></a>
+			<a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"><?php esc_html_e( 'Sign out', 'cheri-gallery' ); ?></a>
+		<?php else : ?>
+			<a href="<?php echo esc_url( CG_Auth::login_url() ); ?>"><?php esc_html_e( 'Client sign in', 'cheri-gallery' ); ?></a>
+		<?php endif; ?>
+	</nav>
+</header>
+<?php endif; ?>

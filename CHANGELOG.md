@@ -2,6 +2,11 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.4.0
+
+- Fixes the enlarged photo showing no controls (the photo opened on its own instead). The gallery's script wasn't starting, which also stopped the hearts and favourites drawer working. All now work.
+- Header and footer are now chosen separately under Cheri Gallery → Settings → Pages. By default: the gallery's own slim header with the Cheri logo (plus My galleries / Sign out), and your website's footer.
+
 ## 0.3.2
 
 - Fixes "GitHub answered with status 403" when checking for updates. Shared web hosts often use up GitHub's 60-requests-an-hour limit for its API, so update checks and downloads now use GitHub's ordinary download links instead.

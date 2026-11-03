@@ -1,15 +1,17 @@
 <?php
 /**
- * Footer of the plugin's full pages: client links, then the website's footer (or a small
- * branded footer on standalone pages).
+ * End of the plugin's full pages: the website's footer (default) or the gallery's branded footer.
  */
 
 defined( 'ABSPATH' ) || exit;
 $cg_settings = CG_Settings::all();
-$cg_themed   = CG_Frontend::use_theme_layout();
-?>
-<footer class="ch-foot<?php echo $cg_themed ? ' ch-foot--slim' : ''; ?>">
-	<?php if ( ! $cg_themed ) : ?>
+$cg_theme_footer = CG_Frontend::theme_footer();
+
+// When the website header is used, the client links live down here instead.
+if ( CG_Frontend::theme_header() || ! $cg_theme_footer ) :
+	?>
+<footer class="ch-foot<?php echo $cg_theme_footer ? ' ch-foot--slim' : ''; ?>">
+	<?php if ( ! $cg_theme_footer ) : ?>
 		<a href="<?php echo esc_url( $cg_settings['website_url'] ); ?>"><img class="ch-foot__logo ch-logo" src="<?php echo esc_url( CG_URL . 'assets/img/cheri-logo.png' ); ?>" alt="<?php echo esc_attr( $cg_settings['from_name'] ); ?>" width="120" height="60"></a>
 	<?php endif; ?>
 	<p class="ch-foot__links">
@@ -20,18 +22,19 @@ $cg_themed   = CG_Frontend::use_theme_layout();
 		<?php else : ?>
 			<a href="<?php echo esc_url( CG_Auth::login_url() ); ?>"><?php esc_html_e( 'Client sign in', 'cheri-gallery' ); ?></a>
 		<?php endif; ?>
-		<?php if ( ! $cg_themed && $cg_settings['instagram_url'] ) : ?>
+		<?php if ( ! $cg_theme_footer && $cg_settings['instagram_url'] ) : ?>
 			<span aria-hidden="true">·</span>
 			<a href="<?php echo esc_url( $cg_settings['instagram_url'] ); ?>">Instagram</a>
 		<?php endif; ?>
 	</p>
-	<?php if ( ! $cg_themed ) : ?>
+	<?php if ( ! $cg_theme_footer ) : ?>
 		<p class="ch-foot__copy">&copy; <?php echo esc_html( gmdate( 'Y' ) . ' ' . $cg_settings['from_name'] ); ?></p>
 	<?php endif; ?>
 </footer>
+<?php endif; ?>
 </div>
 <?php
-if ( $cg_themed ) {
+if ( $cg_theme_footer ) {
 	get_footer();
 } else {
 	wp_footer();

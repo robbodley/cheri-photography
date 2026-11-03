@@ -105,7 +105,20 @@ class CG_Admin_Settings {
 
 						<div class="ch-set__group">
 							<p class="ch-set__h"><?php esc_html_e( 'Pages', 'cheri-gallery' ); ?></p>
-							<?php CG_Admin::toggle( 'theme_layout', $s['theme_layout'], __( 'Use the website\'s header and footer', 'cheri-gallery' ), __( 'Gallery, sign-in and My galleries pages show your site\'s menu and footer. Turn off for a standalone, distraction-free page.', 'cheri-gallery' ) ); ?>
+							<label class="ch-toggle">
+								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'Header on gallery pages', 'cheri-gallery' ); ?></span><span class="ch-toggle__hint"><?php esc_html_e( 'Gallery, sign-in and My galleries pages', 'cheri-gallery' ); ?></span></span>
+								<select class="ch-select" name="site_header">
+									<option value="gallery" <?php selected( $s['site_header'], 'gallery' ); ?>><?php esc_html_e( 'Gallery header (Cheri logo)', 'cheri-gallery' ); ?></option>
+									<option value="theme" <?php selected( $s['site_header'], 'theme' ); ?>><?php esc_html_e( 'Website header (menu)', 'cheri-gallery' ); ?></option>
+								</select>
+							</label>
+							<label class="ch-toggle">
+								<span class="ch-toggle__text"><span class="ch-toggle__label"><?php esc_html_e( 'Footer on gallery pages', 'cheri-gallery' ); ?></span></span>
+								<select class="ch-select" name="site_footer">
+									<option value="theme" <?php selected( $s['site_footer'], 'theme' ); ?>><?php esc_html_e( 'Website footer', 'cheri-gallery' ); ?></option>
+									<option value="gallery" <?php selected( $s['site_footer'], 'gallery' ); ?>><?php esc_html_e( 'Gallery footer (Cheri logo)', 'cheri-gallery' ); ?></option>
+								</select>
+							</label>
 							<p class="cg-hint">
 								<?php esc_html_e( 'Client sign in:', 'cheri-gallery' ); ?> <a href="<?php echo esc_url( CG_Auth::login_url() ); ?>" target="_blank"><?php echo esc_html( CG_Auth::login_url() ); ?></a><br>
 								<?php esc_html_e( 'My galleries:', 'cheri-gallery' ); ?> <a href="<?php echo esc_url( CG_Auth::account_url() ); ?>" target="_blank"><?php echo esc_html( CG_Auth::account_url() ); ?></a><br>
@@ -232,7 +245,8 @@ class CG_Admin_Settings {
 			'default_watermark' => isset( $styles[ $p['default_watermark'] ?? '' ] ) ? $p['default_watermark'] : 'off',
 			'web_size'          => min( 4096, max( 1200, absint( $p['web_size'] ?? 2048 ) ) ),
 			'jpeg_quality'      => min( 95, max( 60, absint( $p['jpeg_quality'] ?? 86 ) ) ),
-			'theme_layout'      => empty( $p['theme_layout'] ) ? 0 : 1,
+			'site_header'       => ( $p['site_header'] ?? '' ) === 'theme' ? 'theme' : 'gallery',
+			'site_footer'       => ( $p['site_footer'] ?? '' ) === 'gallery' ? 'gallery' : 'theme',
 		);
 		CG_Settings::update( $values );
 		wp_safe_redirect( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-settings&cg_msg=settings_saved' ) );

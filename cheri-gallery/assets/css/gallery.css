@@ -136,3 +136,16 @@
 /* Inside the website's own header and footer */
 .ch-foot--slim { padding: var(--ch-space-3); background: var(--ch-surface-cream); }
 .ch-topbar--slim { padding: var(--ch-space-2) var(--ch-space-4); border-bottom: 0; background: var(--ch-surface-cream); }
+
+/* The gallery's own slim header: Cheri logo centred, client links on the right */
+.ch-sitebar { position: relative; display: flex; justify-content: center; align-items: center; min-height: 76px; padding: var(--ch-space-2) var(--ch-space-4); background: var(--ch-surface); border-bottom: 1px solid var(--ch-line); }
+.ch-sitebar__logo img { display: block; width: 120px; height: auto; }
+.ch-sitebar__links { position: absolute; right: var(--ch-space-4); top: 50%; transform: translateY(-50%); display: flex; gap: var(--ch-space-3); }
+.ch-sitebar__links a { font: 600 11px/16px var(--ch-font-sans); letter-spacing: .2em; text-transform: uppercase; color: var(--ch-ink-muted); text-decoration: none; }
+.ch-sitebar__links a:hover { color: var(--ch-tan-strong); }
+@media (max-width: 600px) {
+	.ch-sitebar { justify-content: space-between; padding: var(--ch-space-2) var(--ch-space-3); min-height: 60px; }
+	.ch-sitebar__logo img { width: 96px; }
+	.ch-sitebar__links { position: static; transform: none; gap: var(--ch-space-2); }
+	.ch-sitebar__links a { font-size: 10px; letter-spacing: .12em; }
+}
