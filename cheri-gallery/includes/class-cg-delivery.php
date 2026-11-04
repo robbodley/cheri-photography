@@ -35,14 +35,30 @@ class CG_Delivery {
 	 * URL of a photo copy. The version string changes when the watermark changes,
 	 * so browsers never show a stale copy.
 	 */
-	public static function photo_url( $photo, $size = 'thumb', $plain = false ) {
-		$style = $plain ? 'off' : CG_Galleries::setting( $photo->gallery_id, 'watermark' );
+	public static function photo_url( $photo, $size = 'thumb', $plain = false, $as_cover = false ) {
+		$style = $plain ? 'off' : self::style_for( $photo, $as_cover );
 		$url   = home_url( 'cg-photo/' . absint( $photo->id ) . '/' . ( 'web' === $size ? 'web' : 'thumb' ) . '/' );
 		$args  = array( 'v' => substr( md5( $style . '|' . $photo->filesize . '|' . CG_Settings::get( 'web_size' ) ), 0, 8 ) );
 		if ( $plain ) {
 			$args['plain'] = 1;
 		}
+		if ( $as_cover ) {
+			$args['cover'] = 1;
+		}
 		return add_query_arg( $args, $url );
+	}
+
+	/**
+	 * Watermark style for a photo. Shown as the cover (cover=1), the gallery's cover photo can be
+	 * clean when "Watermark the cover photo" is off; only the actual cover photo, never others.
+	 */
+	public static function style_for( $photo, $as_cover = false ) {
+		$gid   = (int) $photo->gallery_id;
+		$style = CG_Galleries::setting( $gid, 'watermark' );
+		if ( $as_cover && ! CG_Galleries::setting( $gid, 'cover_watermark' ) && (int) CG_Galleries::cover_photo( $gid ) === (int) $photo->id ) {
+			return 'off';
+		}
+		return $style;
 	}
 
 	public static function photo_download_url( $photo ) {
@@ -89,7 +105,8 @@ class CG_Delivery {
 			self::deny();
 		}
 		$plain = ! empty( $_GET['plain'] ) && CG_Access::is_admin(); // phpcs:ignore WordPress.Security.NonceVerification
-		$style = $plain ? 'off' : CG_Galleries::setting( $gid, 'watermark' );
+		$cover = ! empty( $_GET['cover'] ); // phpcs:ignore WordPress.Security.NonceVerification
+		$style = $plain ? 'off' : self::style_for( $photo, $cover );
 		$path  = CG_Images::ensure( $photo, 'web' === $size ? 'web' : 'thumb', $style );
 		if ( ! $path ) {
 			self::deny( 404 );

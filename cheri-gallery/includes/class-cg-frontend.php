@@ -407,7 +407,7 @@ class CG_Frontend {
 			return '';
 		}
 		if ( CG_Access::can_view( $gallery_id ) ) {
-			return CG_Delivery::photo_url( $photo, 'thumb' );
+			return CG_Delivery::photo_url( $photo, 'thumb', false, true );
 		}
 		// Password galleries listed publicly show their cover from the public email copy.
 		return CG_Email::cover_url( $photo );

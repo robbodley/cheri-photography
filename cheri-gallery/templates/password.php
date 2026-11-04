@@ -23,7 +23,7 @@ include cg_template( 'parts/page-start.php' );
 <?php endif; ?>
 <section class="ch-cover ch-cover--locked">
 	<?php if ( $cover ) : ?>
-		<div class="ch-cover__img"><img src="<?php echo esc_url( CG_Delivery::photo_url( $cover, 'web' ) ); ?>" alt="" fetchpriority="high" style="object-position: <?php echo esc_attr( CG_Galleries::cover_css_position( $gid ) ); ?>"></div>
+		<div class="ch-cover__img"><img src="<?php echo esc_url( CG_Delivery::photo_url( $cover, 'web', false, true ) ); ?>" alt="" fetchpriority="high" style="object-position: <?php echo esc_attr( CG_Galleries::cover_css_position( $gid ) ); ?>"></div>
 	<?php else : ?>
 		<div class="ch-cover__img"><span class="ch-ph ch-ph--tan"></span></div>
 	<?php endif; ?>

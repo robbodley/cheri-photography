@@ -97,6 +97,7 @@ class CG_Galleries {
 			'download_who'     => 'client',
 			'watermark'        => CG_Settings::get( 'default_watermark' ),
 			'protect'          => 1,
+			'cover_watermark'  => 0,
 			'favourites'       => 1,
 			'expiry'           => '',
 			'sets'             => array( __( 'Highlights', 'cheri-gallery' ) ),
@@ -167,7 +168,7 @@ class CG_Galleries {
 		if ( isset( $input['watermark'] ) && array_key_exists( $input['watermark'], CG_Images::watermark_styles() ) ) {
 			$s['watermark'] = $input['watermark'];
 		}
-		foreach ( array( 'album_download', 'photo_download', 'favourites', 'protect', 'list_publicly' ) as $flag ) {
+		foreach ( array( 'album_download', 'photo_download', 'favourites', 'protect', 'list_publicly', 'cover_watermark' ) as $flag ) {
 			if ( array_key_exists( $flag, $input ) ) {
 				$s[ $flag ] = empty( $input[ $flag ] ) ? 0 : 1;
 			}

@@ -309,6 +309,7 @@ class CG_Admin_Gallery {
 						<?php endforeach; ?>
 					</select>
 				</label>
+				<?php CG_Admin::toggle( 'cg[cover_watermark]', $s['cover_watermark'], __( 'Watermark the cover photo', 'cheri-gallery' ), __( 'Off: the big cover photo and the gallery card stay clean while the album photos keep the watermark.', 'cheri-gallery' ) ); ?>
 				<?php CG_Admin::toggle( 'cg[protect]', $s['protect'], __( 'Discourage saving', 'cheri-gallery' ), __( 'Turns off right-click and drag-to-save on photos', 'cheri-gallery' ) ); ?>
 				<?php CG_Admin::toggle( 'cg[favourites]', $s['favourites'], __( 'Favourites', 'cheri-gallery' ), __( 'Client can make favourite lists and send them to you', 'cheri-gallery' ) ); ?>
 				<label class="ch-toggle">
