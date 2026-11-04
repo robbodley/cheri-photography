@@ -45,9 +45,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "v${{ steps.version.outputs.version }}" > /dev/null 2>&1; then
-            echo "Version ${{ steps.version.outputs.version }} is already released; bump the version to publish an update."
+          v="v${{ steps.version.outputs.version }}"
+          draft=$(gh release view "$v" --json isDraft -q .isDraft 2>/dev/null || echo "none")
+          if [ "$draft" = "false" ]; then
+            echo "Version $v is already released; bump the version to publish an update."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+          elif [ "$draft" = "true" ]; then
+            echo "Removing an unfinished draft of $v left by an earlier failed run."
+            gh release delete "$v" --yes --cleanup-tag || true
           fi
 
       - name: Syntax-check every PHP file
@@ -85,8 +90,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           v="${{ steps.version.outputs.version }}"
-          gh release create "v$v" cheri-gallery.zip release.json \
-            --target "$GITHUB_SHA" \
-            --title "Cheri Gallery $v" \
-            --notes-file notes.md \
-            --latest
+          # GitHub occasionally answers 500; clear any half-made draft and try again.
+          for attempt in 1 2 3; do
+            if gh release create "v$v" cheri-gallery.zip release.json \
+                --target "$GITHUB_SHA" \
+                --title "Cheri Gallery $v" \
+                --notes-file notes.md \
+                --latest; then
+              exit 0
+            fi
+            echo "Attempt $attempt failed; retrying in $((attempt * 15))s"
+            gh release delete "v$v" --yes --cleanup-tag 2>/dev/null || true
+            sleep $((attempt * 15))
+          done
+          exit 1
