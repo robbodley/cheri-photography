@@ -53,8 +53,37 @@ The plugin updates itself from this repository's GitHub Releases, like any plugi
 | `/gallery/<name>/` | A client gallery |
 | `/client-login/` | Client sign-in (email link) |
 | `/my-galleries/` | A signed-in client's galleries and favourites |
-| `[cheri_gallery id="42"]` | One public gallery's photos on any page (options: `set`, `limit`, `columns`, `title="yes"`, `link="no"`). Copy it from the gallery's Share box |
-| `[cheri_galleries]` | Shortcode listing galleries marked "Show on the galleries page" (`type="portrait"` to filter) |
+| `[cheri_gallery id="42"]` | One public gallery's photos on any page. See [Shortcodes](#shortcodes) |
+| `[cheri_galleries]` | Cards for galleries marked "Show on the galleries page". See [Shortcodes](#shortcodes) |
+
+## Shortcodes
+
+Paste these into any page or post, or into an Elementor **Shortcode** widget. Options go inside the brackets, in any order, e.g. `[cheri_gallery id="42" set="Portraits" columns="3" gap="12" title="yes"]`.
+
+### `[cheri_gallery]`: show one gallery's photos on a page
+
+The photo grid plus the enlarged view (Previous / Next, Slideshow, Back), with a "View the full gallery" button underneath. It's view only (no hearts or downloads) and the gallery's watermark still applies. Copy the shortcode from the gallery's **Share** box.
+
+| Option | What it does | Default | Example |
+|---|---|---|---|
+| `id` | **Required.** Which gallery (the number in its shortcode or edit link) | none | `id="42"` |
+| `set` | Show only one set, by its name exactly as written in Photos | all sets | `set="Ceremony"` |
+| `limit` | Show only the first so many photos | all photos | `limit="12"` |
+| `columns` | Columns on a computer, from 2 to 6 (tablets show at most 3, phones at most 2) | `4` | `columns="3"` |
+| `gap` | Space between photos in pixels, from 0 to 30 | `8` | `gap="12"` |
+| `title` | Show the gallery name above the photos | `no` | `title="yes"` |
+| `link` | Show the "View the full gallery" button | `yes` | `link="no"` |
+
+Only **public, published** galleries that haven't passed their closing date can be shown. For anything else visitors see nothing, and you see a short note when signed in.
+
+### `[cheri_galleries]`: a list of gallery cards
+
+A grid of cards (cover photo, session type, name, date and number of photos) linking to each gallery. It only includes galleries with **Show on the galleries page** switched on in their Settings, and never private ones.
+
+| Option | What it does | Default | Example |
+|---|---|---|---|
+| `type` | Only one session type: `wedding`, `portrait`, `newborn` or `corporate` | all types | `type="portrait"` |
+| `limit` | Most cards to show | `24` | `limit="6"` |
 
 ## Look and layout
 
