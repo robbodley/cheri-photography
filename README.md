@@ -53,6 +53,7 @@ The plugin updates itself from this repository's GitHub Releases, like any plugi
 | `/gallery/<name>/` | A client gallery |
 | `/client-login/` | Client sign-in (email link) |
 | `/my-galleries/` | A signed-in client's galleries and favourites |
+| `[cheri_gallery id="42"]` | One public gallery's photos on any page (options: `set`, `limit`, `columns`, `title="yes"`, `link="no"`). Copy it from the gallery's Share box |
 | `[cheri_galleries]` | Shortcode listing galleries marked "Show on the galleries page" (`type="portrait"` to filter) |
 
 ## Look and layout

@@ -2,6 +2,12 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.9.0
+
+- Show a public gallery on any page of your website with `[cheri_gallery id="…"]`. You get the photo grid and the enlarged view with Previous/Next, plus a "View the full gallery" button. Copy the shortcode from the gallery's Share box.
+- Options: `set="Ceremony"` (one set), `limit="12"`, `columns="3"` (2–6), `title="yes"` (gallery name above), `link="no"` (hide the button). It works in an Elementor Shortcode widget too.
+- Only public, published, open galleries can be embedded. Watermarks still apply, and there are no hearts or downloads in the embed.
+
 ## 0.8.2
 
 - New "Watermark the cover photo" switch in each gallery's Settings → Protection. When it's off (the default), the cover photo at the top, the locked page and the gallery card show clean while every album photo keeps its watermark.

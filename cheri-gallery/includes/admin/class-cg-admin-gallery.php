@@ -441,6 +441,15 @@ class CG_Admin_Gallery {
 		} else {
 			echo '<p><a class="ch-btn ch-btn--sm" href="' . esc_url( self::share_url( $post->ID ) ) . '">' . esc_html__( 'Share gallery', 'cheri-gallery' ) . '</a></p>';
 		}
+		// Shortcode to show this gallery on another page (public galleries only).
+		echo '<p class="ch-set__h" style="margin-top:16px">' . esc_html__( 'Show on a web page', 'cheri-gallery' ) . '</p>';
+		if ( CG_Frontend::embeddable( $post->ID ) ) {
+			$code = '[cheri_gallery id="' . absint( $post->ID ) . '"]';
+			echo '<p class="cg-copyline"><code>' . esc_html( $code ) . '</code> <button type="button" class="button button-small" data-cg-copy="' . esc_attr( $code ) . '">' . esc_html__( 'Copy', 'cheri-gallery' ) . '</button></p>';
+			echo '<p class="cg-hint">' . esc_html__( 'Paste into any page or an Elementor Shortcode widget. Options: set="Ceremony" limit="12" columns="3" title="yes" link="no".', 'cheri-gallery' ) . '</p>';
+		} else {
+			echo '<p class="cg-hint">' . esc_html__( 'Only public, published galleries can be shown on other pages. Set "Who can see it" to Public to get a shortcode.', 'cheri-gallery' ) . '</p>';
+		}
 		if ( $log ) {
 			echo '<p class="ch-set__h">' . esc_html__( 'Sent', 'cheri-gallery' ) . '</p><ul class="cg-log">';
 			foreach ( array_slice( $log, 0, 5 ) as $row ) {

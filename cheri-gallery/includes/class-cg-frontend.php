@@ -24,6 +24,7 @@ class CG_Frontend {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'isolate_styles' ), 9999 );
 		add_filter( 'wp_robots', array( __CLASS__, 'robots' ) );
 		add_shortcode( 'cheri_galleries', array( __CLASS__, 'shortcode' ) );
+		add_shortcode( 'cheri_gallery', array( __CLASS__, 'embed_shortcode' ) );
 	}
 
 	/**
@@ -392,6 +393,81 @@ class CG_Frontend {
 			}
 		}
 		return '<div class="cg-page cg-embed">' . cg_render( 'parts/album-grid.php', array( 'galleries' => $cards ) ) . '</div>';
+	}
+
+	/** Set once the gallery script has been set up for embeds on this page. */
+	private static $embed_script = false;
+
+	/**
+	 * [cheri_gallery id="42" set="Ceremony" limit="12" columns="3" title="yes" link="no"]
+	 * Shows a public gallery's photos (grid + enlarged view) on any page. View only: no hearts or downloads.
+	 */
+	public static function embed_shortcode( $atts ) {
+		$atts = shortcode_atts(
+			array(
+				'id'      => 0,
+				'set'     => '',
+				'limit'   => 0,
+				'columns' => 4,
+				'title'   => 'no',
+				'link'    => 'yes',
+			),
+			$atts,
+			'cheri_gallery'
+		);
+		$gid = absint( $atts['id'] );
+		if ( ! CG_Galleries::is_gallery( $gid ) || ! self::embeddable( $gid ) ) {
+			return current_user_can( CG_CAP )
+				? '<p style="padding:12px;border:1px dashed #a4443a;color:#a4443a;">' . esc_html__( 'Cheri Gallery: this shortcode only shows public, published galleries that are still open. (Only you can see this note.)', 'cheri-gallery' ) . '</p>'
+				: '';
+		}
+
+		$args = array( 'include_hidden' => false );
+		if ( '' !== $atts['set'] ) {
+			$args['set'] = sanitize_text_field( $atts['set'] );
+		}
+		if ( absint( $atts['limit'] ) ) {
+			$args['limit'] = absint( $atts['limit'] );
+		}
+		$photos = CG_Photos::for_gallery( $gid, $args );
+		if ( ! $photos ) {
+			return '';
+		}
+
+		self::register_assets();
+		wp_enqueue_style( 'cg-gallery' );
+		if ( ! self::$embed_script && ! wp_script_is( 'cg-gallery', 'enqueued' ) ) {
+			self::$embed_script = true;
+			self::enqueue_gallery_script(
+				array(
+					'gallery_id'      => $gid,
+					'can_favourite'   => false,
+					'sign_in_for_fav' => false,
+					'login_url'       => '',
+					'settings'        => array( 'protect' => (bool) CG_Galleries::setting( $gid, 'protect' ) ),
+				)
+			);
+		}
+
+		return cg_render(
+			'parts/embed.php',
+			array(
+				'gallery_id' => $gid,
+				'photos'     => $photos,
+				'columns'    => min( 6, max( 2, absint( $atts['columns'] ) ) ),
+				'show_title' => 'yes' === strtolower( $atts['title'] ),
+				'show_link'  => 'no' !== strtolower( $atts['link'] ),
+			)
+		);
+	}
+
+	/**
+	 * Only public, published, open galleries can be shown on other pages.
+	 */
+	public static function embeddable( $gallery_id ) {
+		return 'publish' === get_post_status( $gallery_id )
+			&& 'public' === CG_Galleries::setting( $gallery_id, 'visibility' )
+			&& ! CG_Galleries::is_expired( $gallery_id );
 	}
 
 	/**

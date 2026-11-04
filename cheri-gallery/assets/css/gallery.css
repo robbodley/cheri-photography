@@ -186,3 +186,12 @@
 .ch-unlock__note { margin: var(--ch-space-2) 0 0; font-size: 12px; line-height: 18px; color: rgba(255, 255, 255, .85); }
 .ch-adminbar--tan { background: var(--ch-tan-strong); color: var(--ch-on-tan); }
 .ch-cover--locked .ch-cover__body { padding-bottom: 120px; }
+
+/* [cheri_gallery] embedded on another page */
+.cg-page.cg-embed { background: transparent; margin: var(--ch-space-4) 0; }
+.ch-embed__title { font: 400 28px/36px var(--ch-font-display); color: var(--ch-tan-strong); text-align: center; margin: 0 0 var(--ch-space-3); }
+.ch-grid--embed { column-count: var(--cg-cols, 4); }
+@media (max-width: 900px) { .ch-grid--embed { column-count: min(var(--cg-cols, 4), 3); } }
+@media (max-width: 600px) { .ch-grid--embed { column-count: min(var(--cg-cols, 4), 2); } }
+.ch-embed__more { text-align: center; margin: var(--ch-space-4) 0 0; }
+.cg-page.cg-overlay { background: none; margin: 0; }

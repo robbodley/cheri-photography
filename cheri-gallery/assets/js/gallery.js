@@ -33,7 +33,14 @@
 	/* ---------------------------------------------------------------- */
 	/* Toast                                                             */
 	/* ---------------------------------------------------------------- */
-	var root = document.getElementById('cg-root') || document.body;
+	// Where the lightbox and drawer live: the gallery page's wrapper, or (for embeds on other pages)
+	// a styled container added to the end of the page.
+	var root = document.getElementById('cg-root');
+	if (!root) {
+		root = document.createElement('div');
+		root.className = 'cg-page cg-overlay';
+		document.body.appendChild(root);
+	}
 
 	var toastEl = $('[data-cg-toast]');
 	var toastTimer;
@@ -70,8 +77,8 @@
 		showSet(start, false);
 	}
 
-	function visibleItems() {
-		return $$('.ch-grid__item').filter(function (f) {
+	function visibleItems(scope) {
+		return $$('.ch-grid__item', scope).filter(function (f) {
 			var panel = f.closest('[data-cg-set-panel]');
 			return (!panel || !panel.hidden) && !f.hidden;
 		});
@@ -390,9 +397,9 @@
 		if (next) { (new Image()).src = next.getAttribute('data-web'); }
 	}
 
-	function openLightbox(index) {
+	function openLightbox(index, scope) {
 		if (!lb) { buildLightbox(); }
-		lbItems = visibleItems();
+		lbItems = visibleItems(scope);
 		if (!lbItems.length) { return; }
 		lbIndex = Math.max(0, Math.min(index, lbItems.length - 1));
 		lastFocus = document.activeElement;
@@ -452,7 +459,9 @@
 	$$('.ch-grid__open').forEach(function (a) {
 		a.addEventListener('click', function (e) {
 			e.preventDefault();
-			openLightbox(visibleItems().indexOf(a.closest('.ch-grid__item')));
+			// Each embedded gallery on a page pages through its own photos only.
+			var scope = a.closest('.cg-embed') || document;
+			openLightbox(visibleItems(scope).indexOf(a.closest('.ch-grid__item')), scope);
 		});
 	});
 	var showBtn = $('[data-cg-slideshow]');
