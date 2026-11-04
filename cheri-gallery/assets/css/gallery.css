@@ -195,3 +195,8 @@
 @media (max-width: 600px) { .ch-grid--embed { column-count: min(var(--cg-cols, 4), 2); } }
 .ch-embed__more { text-align: center; margin: var(--ch-space-4) 0 0; }
 .cg-page.cg-overlay { background: none; margin: 0; }
+
+/* Photo spacing that themes and page builders can't override */
+.cg-page .ch-grid .ch-grid__item { display: inline-block; width: 100%; vertical-align: top; margin: 0 0 var(--cg-gap, var(--ch-space-1)) !important; padding: 0 !important; }
+.cg-page .ch-grid { column-gap: var(--cg-gap, var(--ch-space-1)) !important; }
+.cg-page .ch-grid--embed { --cg-gap: 8px; padding: 0; }

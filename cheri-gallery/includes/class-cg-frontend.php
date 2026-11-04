@@ -411,6 +411,7 @@ class CG_Frontend {
 				'columns' => 4,
 				'title'   => 'no',
 				'link'    => 'yes',
+				'gap'     => 8,
 			),
 			$atts,
 			'cheri_gallery'
@@ -455,6 +456,7 @@ class CG_Frontend {
 				'gallery_id' => $gid,
 				'photos'     => $photos,
 				'columns'    => min( 6, max( 2, absint( $atts['columns'] ) ) ),
+				'gap'        => min( 30, absint( $atts['gap'] ) ),
 				'show_title' => 'yes' === strtolower( $atts['title'] ),
 				'show_link'  => 'no' !== strtolower( $atts['link'] ),
 			)

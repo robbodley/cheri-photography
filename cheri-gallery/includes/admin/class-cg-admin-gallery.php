@@ -446,7 +446,7 @@ class CG_Admin_Gallery {
 		if ( CG_Frontend::embeddable( $post->ID ) ) {
 			$code = '[cheri_gallery id="' . absint( $post->ID ) . '"]';
 			echo '<p class="cg-copyline"><code>' . esc_html( $code ) . '</code> <button type="button" class="button button-small" data-cg-copy="' . esc_attr( $code ) . '">' . esc_html__( 'Copy', 'cheri-gallery' ) . '</button></p>';
-			echo '<p class="cg-hint">' . esc_html__( 'Paste into any page or an Elementor Shortcode widget. Options: set="Ceremony" limit="12" columns="3" title="yes" link="no".', 'cheri-gallery' ) . '</p>';
+			echo '<p class="cg-hint">' . esc_html__( 'Paste into any page or an Elementor Shortcode widget. Options: set="Ceremony" limit="12" columns="3" gap="12" title="yes" link="no".', 'cheri-gallery' ) . '</p>';
 		} else {
 			echo '<p class="cg-hint">' . esc_html__( 'Only public, published galleries can be shown on other pages. Set "Who can see it" to Public to get a shortcode.', 'cheri-gallery' ) . '</p>';
 		}

@@ -2,6 +2,11 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.9.1
+
+- Fixes missing space between photos stacked above each other when a theme or Elementor overrides the gallery's spacing.
+- Embedded galleries get an 8px gap by default, and a new `gap` option (0–30) sets your own, e.g. `[cheri_gallery id="42" gap="12"]`.
+
 ## 0.9.0
 
 - Show a public gallery on any page of your website with `[cheri_gallery id="…"]`. You get the photo grid and the enlarged view with Previous/Next, plus a "View the full gallery" button. Copy the shortcode from the gallery's Share box.
