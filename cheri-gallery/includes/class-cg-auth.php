@@ -88,7 +88,27 @@ class CG_Auth {
 		$uid   = isset( $_GET['u'] ) ? absint( $_GET['u'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		$token = isset( $_GET['t'] ) ? sanitize_text_field( wp_unslash( $_GET['t'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
-		if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['cg_action'] ) ) { // phpcs:ignore
+		$signup = isset( $_REQUEST['cg_confirm'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['cg_confirm'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+
+		if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['cg_action'] ) && 'confirm_signup' === $_POST['cg_action'] ) { // phpcs:ignore
+			check_admin_referer( 'cg_confirm_signup' );
+			$gid = self::finish_signup( $signup );
+			if ( ! is_wp_error( $gid ) ) {
+				wp_safe_redirect( $gid ? get_permalink( $gid ) : self::account_url() );
+				exit;
+			}
+			$state   = 'ask';
+			$message = $gid->get_error_message();
+		} elseif ( $signup && 'GET' === $_SERVER['REQUEST_METHOD'] ) { // phpcs:ignore
+			// Show a button first, so email link scanners can't use the link up.
+			$data = get_transient( self::signup_key( $signup ) );
+			if ( is_array( $data ) ) {
+				$state = 'confirm_signup';
+				$email = $data['email'];
+			} else {
+				$message = __( 'That link has expired or has already been used. Open the gallery and sign up again.', 'cheri-gallery' );
+			}
+		} elseif ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['cg_action'] ) ) { // phpcs:ignore
 			$action = sanitize_key( $_POST['cg_action'] ); // phpcs:ignore
 			if ( 'send_link' === $action && check_admin_referer( 'cg_send_link' ) ) {
 				$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
@@ -137,6 +157,7 @@ class CG_Auth {
 				'redirect' => $redirect,
 				'uid'      => $uid,
 				'token'    => $token,
+				'signup'   => $signup,
 			)
 		);
 		exit;
@@ -244,6 +265,87 @@ class CG_Auth {
 			return self::account_url();
 		}
 		return $redirect_to;
+	}
+
+	/**
+	 * Accounts that may use the gallery password: client accounts only, never anyone who can edit the site.
+	 */
+	public static function can_password_signin( $user ) {
+		return $user instanceof WP_User && self::is_client( $user ) && ! user_can( $user, 'edit_posts' ) && ! user_can( $user, CG_CAP );
+	}
+
+	public static function sign_in( $user_id ) {
+		wp_set_current_user( $user_id );
+		wp_set_auth_cookie( $user_id, true, is_ssl() );
+		update_user_meta( $user_id, '_cg_last_visit', current_time( 'mysql' ) );
+	}
+
+	/**
+	 * A new person (or an existing client not yet on this gallery) knows the gallery password:
+	 * email them a link to confirm their address. The account is created only when they confirm.
+	 */
+	public static function start_signup( $email, $first_name, $gallery_id ) {
+		$token = wp_generate_password( 32, false, false );
+		set_transient(
+			'cg_su_' . hash_hmac( 'sha256', $token, wp_salt( 'auth' ) ),
+			array(
+				'email'      => $email,
+				'first_name' => $first_name,
+				'gallery'    => absint( $gallery_id ),
+			),
+			DAY_IN_SECONDS
+		);
+		$link    = add_query_arg( 'cg_confirm', $token, home_url( 'client-login/' ) );
+		$name    = $first_name ? $first_name : __( 'there', 'cheri-gallery' );
+		$gallery = get_the_title( $gallery_id );
+		$content  = '<p style="margin:0 0 12px;">' . esc_html( sprintf( /* translators: %s: name */ __( 'Hi %s,', 'cheri-gallery' ), $name ) ) . '</p>';
+		$content .= '<p style="margin:0 0 20px;">' . esc_html( sprintf( /* translators: %s: gallery */ __( 'Confirm your email to open %s and save your favourites.', 'cheri-gallery' ), $gallery ) ) . '</p>';
+		$content .= '<p style="margin:0 0 20px;text-align:center;"><a href="' . esc_url( $link ) . '" style="display:inline-block;background:#7d5f41;color:#ffffff;text-decoration:none;font:600 11px/16px \'Open Sans\',Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;padding:12px 28px;">' . esc_html__( 'Confirm my email', 'cheri-gallery' ) . '</a></p>';
+		$content .= '<p style="margin:0;font-size:12px;line-height:18px;color:#6b625a;">' . esc_html__( 'The link lasts 24 hours. If you didn\'t ask for it, you can ignore this email.', 'cheri-gallery' ) . '</p>';
+		$html = cg_render( 'email-layout.php', array( 'settings' => CG_Settings::all(), 'content' => $content ) );
+		/* translators: %s: gallery */
+		$subject = sprintf( __( 'Confirm your email for %s', 'cheri-gallery' ), $gallery );
+		$text    = sprintf( /* translators: 1: gallery, 2: link */ __( "Confirm your email to open %1\$s and save your favourites:\n%2\$s\n\nThe link lasts 24 hours.", 'cheri-gallery' ), $gallery, $link );
+		return CG_Email::send( $email, $subject, $html, $text );
+	}
+
+	private static function signup_key( $token ) {
+		return 'cg_su_' . hash_hmac( 'sha256', (string) $token, wp_salt( 'auth' ) );
+	}
+
+	/**
+	 * Finish a sign-up: create (or find) the account, add them to the gallery as a guest, sign in.
+	 *
+	 * @return int|WP_Error Gallery ID.
+	 */
+	private static function finish_signup( $token ) {
+		$data = get_transient( self::signup_key( $token ) );
+		if ( ! is_array( $data ) || empty( $data['email'] ) ) {
+			return new WP_Error( 'cg_signup', __( 'That link has expired or has already been used. Open the gallery and sign up again.', 'cheri-gallery' ) );
+		}
+		delete_transient( self::signup_key( $token ) );
+		$user = get_user_by( 'email', $data['email'] );
+		if ( $user && ! self::can_password_signin( $user ) ) {
+			return new WP_Error( 'cg_signup', __( 'This email belongs to an account that signs in another way. Use Client sign in instead.', 'cheri-gallery' ) );
+		}
+		$new = false;
+		if ( ! $user ) {
+			$uid = self::create_client( $data['email'], $data['first_name'] );
+			if ( is_wp_error( $uid ) ) {
+				return $uid;
+			}
+			$user = get_userdata( $uid );
+			$new  = true;
+		}
+		$gid = absint( $data['gallery'] );
+		if ( CG_Galleries::is_gallery( $gid ) ) {
+			CG_Galleries::add_guest( $gid, $user->ID );
+		}
+		self::sign_in( $user->ID );
+		if ( $new ) {
+			CG_Email::notify_new_guest( $user, $gid );
+		}
+		return $gid;
 	}
 
 	/**

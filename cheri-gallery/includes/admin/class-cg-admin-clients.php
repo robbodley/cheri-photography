@@ -265,7 +265,7 @@ class CG_Admin_Clients {
 								<tbody>
 								<?php foreach ( $galleries as $g ) : ?>
 									<tr>
-										<td><a class="ch-who__name" href="<?php echo esc_url( get_edit_post_link( $g->ID ) ); ?>"><?php echo esc_html( get_the_title( $g ) ); ?></a><?php echo 'publish' !== $g->post_status ? '<span class="cg-status">' . esc_html__( 'Draft', 'cheri-gallery' ) . '</span>' : ''; ?><span class="ch-who__mail"><?php echo esc_html( cg_session_label( CG_Galleries::setting( $g->ID, 'session_type' ) ) . ' · ' . cg_format_date( CG_Galleries::setting( $g->ID, 'event_date' ), 'j M Y' ) ); ?></span></td>
+										<td><a class="ch-who__name" href="<?php echo esc_url( get_edit_post_link( $g->ID ) ); ?>"><?php echo esc_html( get_the_title( $g ) ); ?></a><?php echo 'publish' !== $g->post_status ? '<span class="cg-status">' . esc_html__( 'Draft', 'cheri-gallery' ) . '</span>' : ''; ?><?php echo 'guest' === CG_Galleries::role_on( $g->ID, $uid ) ? '<span class="cg-status">' . esc_html__( 'Guest', 'cheri-gallery' ) . '</span>' : ''; ?><span class="ch-who__mail"><?php echo esc_html( cg_session_label( CG_Galleries::setting( $g->ID, 'session_type' ) ) . ' · ' . cg_format_date( CG_Galleries::setting( $g->ID, 'event_date' ), 'j M Y' ) ); ?></span></td>
 										<td class="num"><?php echo esc_html( CG_Photos::count( $g->ID ) ); ?> <?php esc_html_e( 'photos', 'cheri-gallery' ); ?></td>
 										<td class="num"><a href="<?php echo esc_url( CG_Admin_Gallery::share_url( $g->ID ) ); ?>"><?php esc_html_e( 'Share', 'cheri-gallery' ); ?></a></td>
 										<td class="num">

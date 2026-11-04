@@ -52,6 +52,25 @@
 		});
 	}
 
+	/* Guests: make client (moves them into the clients list) or remove */
+	var guests = $('[data-cg-guests]');
+	if (guests && addClient) {
+		guests.addEventListener('click', function (e) {
+			var li = e.target.closest('.cg-chip');
+			if (!li) { return; }
+			if (e.target.closest('[data-cg-guest-promote]')) {
+				var opt = addClient.querySelector('option[value="' + li.getAttribute('data-id') + '"]');
+				if (opt && !opt.disabled) {
+					addClient.value = opt.value;
+					addClient.dispatchEvent(new Event('change'));
+				}
+				li.remove();
+			} else if (e.target.closest('[data-cg-guest-remove]')) {
+				li.remove();
+			}
+		});
+	}
+
 	/* Visibility hints */
 	$$('[data-cg-vis]').forEach(function (r) {
 		r.addEventListener('change', function () {

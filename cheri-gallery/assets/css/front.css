@@ -338,3 +338,12 @@
 }
 .cg-page .ch-adminbar { margin: 0; padding: 8px var(--ch-space-3); background: var(--ch-ink); color: var(--ch-surface); font-size: 13px; line-height: 20px; text-align: center; }
 .cg-page .ch-adminbar a { color: var(--ch-tan); margin-left: 8px; }
+.cg-page .ch-unlock--email { margin-top: var(--ch-space-3); }
+.cg-page .ch-unlock--email summary { cursor: pointer; color: var(--ch-on-photo); font-size: 13px; line-height: 20px; text-decoration: underline; text-underline-offset: 3px; list-style: none; }
+.cg-page .ch-unlock--email summary::-webkit-details-marker { display: none; }
+.cg-page .ch-unlock--email[open] summary { margin-bottom: var(--ch-space-2); }
+.cg-page .ch-unlock__stack { display: grid; gap: var(--ch-space-2); }
+.cg-page .ch-unlock__stack .ch-unlock__label { margin: var(--ch-space-1) 0 0; }
+.cg-page .ch-unlock__note { margin: var(--ch-space-2) 0 0; font-size: 12px; line-height: 18px; color: rgba(255, 255, 255, .85); }
+.cg-page .ch-adminbar--tan { background: var(--ch-tan-strong); color: var(--ch-on-tan); }
+.cg-page .ch-cover--locked .ch-cover__body { padding-bottom: 120px; }

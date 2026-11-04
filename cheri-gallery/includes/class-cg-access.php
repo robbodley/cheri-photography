@@ -17,6 +17,11 @@ class CG_Access {
 		return current_user_can( CG_CAP );
 	}
 
+	/** Is the current user a client or a signed-up guest of this gallery? */
+	public static function is_member_of( $gallery_id ) {
+		return '' !== CG_Galleries::role_on( $gallery_id, get_current_user_id() );
+	}
+
 	/** Is the current user one of this gallery's clients? */
 	public static function is_client_of( $gallery_id ) {
 		$uid = get_current_user_id();
@@ -36,7 +41,7 @@ class CG_Access {
 		if ( CG_Galleries::is_expired( $gallery_id ) ) {
 			return 'expired';
 		}
-		if ( self::is_client_of( $gallery_id ) ) {
+		if ( self::is_member_of( $gallery_id ) ) {
 			return '';
 		}
 		$s = CG_Galleries::get( $gallery_id );
@@ -102,7 +107,7 @@ class CG_Access {
 	public static function can_favourite( $gallery_id ) {
 		return self::can_view( $gallery_id )
 			&& CG_Galleries::setting( $gallery_id, 'favourites' )
-			&& ( self::is_client_of( $gallery_id ) || self::is_admin() );
+			&& ( self::is_member_of( $gallery_id ) || self::is_admin() );
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -131,6 +136,14 @@ class CG_Access {
 		}
 		$value = sanitize_text_field( wp_unslash( $_COOKIE[ $name ] ) );
 		return hash_equals( self::signature( $gallery_id, $kind, $secret ), $value );
+	}
+
+	/**
+	 * Has this browser entered the gallery's current password?
+	 */
+	public static function has_password_cookie( $gallery_id ) {
+		return 'password' === CG_Galleries::setting( $gallery_id, 'visibility' )
+			&& self::has_cookie( $gallery_id, 'pass', (string) CG_Galleries::setting( $gallery_id, 'password' ) );
 	}
 
 	public static function grant( $gallery_id, $kind ) {

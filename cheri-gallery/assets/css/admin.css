@@ -110,3 +110,8 @@
 .cg-status { font-size: 11px; color: var(--ch-ink-muted); text-transform: uppercase; letter-spacing: .12em; margin-left: 6px; }
 .cg-linkbtn { border: 0; background: none; padding: 0; color: var(--ch-danger); cursor: pointer; font-size: 13px; }
 .cg-linkbtn:hover { text-decoration: underline; }
+
+.cg-chip--guest { background: var(--ch-surface); }
+.cg-chip__btns { display: inline-flex; gap: 4px; flex: none; }
+.cg-chip__promote { border: 1px solid var(--ch-tan-strong); background: var(--ch-surface); color: var(--ch-tan-strong); font: 600 10px/14px var(--ch-font-sans); letter-spacing: .1em; text-transform: uppercase; padding: 4px 6px; cursor: pointer; }
+.cg-chip__promote:hover { background: var(--ch-tan-strong); color: var(--ch-on-tan); }

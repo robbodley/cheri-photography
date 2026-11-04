@@ -23,6 +23,7 @@ class CG_Settings {
 			'default_watermark' => 'off',
 			'gallery_base'      => 'gallery',
 			'gallery_header'    => 'none',
+			'password_signin'   => 1,
 			'pages_header'      => 'theme',
 			'site_footer'       => 'theme',
 			'templates'         => self::default_templates(),

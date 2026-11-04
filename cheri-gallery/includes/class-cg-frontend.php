@@ -13,6 +13,9 @@ class CG_Frontend {
 	/** Error message for the password form. */
 	private static $password_error = '';
 
+	/** State of the "sign in with your email" form on a locked gallery. */
+	private static $access = array();
+
 	public static function init() {
 		add_action( 'template_redirect', array( __CLASS__, 'handle_gallery_request' ), 5 );
 		add_filter( 'template_include', array( __CLASS__, 'template' ), 99 );
@@ -125,6 +128,11 @@ class CG_Frontend {
 		self::own_page();
 		nocache_headers();
 
+		if ( isset( $_POST['cg_access_email'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			self::handle_access_form( $gid );
+			return;
+		}
+
 		if ( isset( $_POST['cg_gallery_password'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			if ( ! isset( $_POST['_cgnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_cgnonce'] ) ), 'cg_pass_' . $gid ) ) {
 				self::$password_error = __( 'The page had been open a while. Please try again.', 'cheri-gallery' );
@@ -147,6 +155,82 @@ class CG_Frontend {
 		}
 	}
 
+	/**
+	 * Email + gallery password on a locked gallery:
+	 *  - a client already on this gallery goes straight in (if the setting allows),
+	 *  - anyone else gets an email link to confirm their address and joins as a guest.
+	 */
+	private static function handle_access_form( $gid ) {
+		$email    = sanitize_email( wp_unslash( $_POST['cg_access_email'] ) ); // phpcs:ignore
+		$first    = isset( $_POST['cg_access_name'] ) ? sanitize_text_field( wp_unslash( $_POST['cg_access_name'] ) ) : ''; // phpcs:ignore
+		$password = isset( $_POST['cg_access_password'] ) ? (string) wp_unslash( $_POST['cg_access_password'] ) : ''; // phpcs:ignore
+		self::$access = array(
+			'open'  => true,
+			'email' => $email,
+			'name'  => $first,
+		);
+		if ( ! isset( $_POST['_cgnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_cgnonce'] ) ), 'cg_access_' . $gid ) ) {
+			self::$access['error'] = __( 'The page had been open a while. Please try again.', 'cheri-gallery' );
+			return;
+		}
+		if ( ! is_email( $email ) ) {
+			self::$access['error'] = __( 'Enter your email address.', 'cheri-gallery' );
+			return;
+		}
+		$user = get_user_by( 'email', $email );
+
+		if ( '' === $password ) {
+			// Only allowed at the "add your first name" step: a brand-new email, from a browser that
+			// has just entered the right gallery password. Signing in to an existing account always
+			// needs the password typed.
+			if ( $user || ! CG_Access::has_password_cookie( $gid ) ) {
+				self::$access['error'] = __( 'Enter the gallery password.', 'cheri-gallery' );
+				return;
+			}
+		} else {
+			$ok = CG_Access::try_password( $gid, $password );
+			if ( true !== $ok ) {
+				self::$access['error'] = $ok;
+				return;
+			}
+		}
+		$role = $user ? CG_Galleries::role_on( $gid, $user->ID ) : '';
+
+		// Already on this gallery: straight in.
+		if ( $user && '' !== $role && CG_Auth::can_password_signin( $user ) && CG_Settings::get( 'password_signin' ) ) {
+			CG_Auth::sign_in( $user->ID );
+			wp_safe_redirect( get_permalink( $gid ) );
+			exit;
+		}
+		// Admin / editor accounts never sign in with a gallery password.
+		if ( $user && ! CG_Auth::can_password_signin( $user ) ) {
+			self::$access['error'] = __( 'Please use Client sign in for this email.', 'cheri-gallery' );
+			return;
+		}
+		// On this gallery, but password sign-in is switched off: send their usual sign-in link.
+		if ( $user && '' !== $role ) {
+			CG_Auth::send_link( $user, get_permalink( $gid ) );
+			wp_safe_redirect( add_query_arg( 'cg_notice', 'link', get_permalink( $gid ) ) );
+			exit;
+		}
+		// New here: ask for a first name, then email a confirmation link.
+		if ( ! $user && '' === $first ) {
+			self::$access['need_name'] = true;
+			return;
+		}
+		if ( ! cg_rate_limit( 'signup|' . strtolower( $email ), 3, HOUR_IN_SECONDS ) ) {
+			self::$access['error'] = __( 'We\'ve already sent a few emails to that address. Check your inbox (and spam).', 'cheri-gallery' );
+			return;
+		}
+		CG_Auth::start_signup( $email, $first ? $first : ( $user ? $user->first_name : '' ), $gid );
+		wp_safe_redirect( add_query_arg( 'cg_notice', 'confirm', get_permalink( $gid ) ) );
+		exit;
+	}
+
+	public static function access_state() {
+		return self::$access;
+	}
+
 	public static function template( $template ) {
 		if ( ! is_singular( CG_Galleries::POST_TYPE ) ) {
 			return $template;
@@ -157,7 +241,8 @@ class CG_Frontend {
 		// The photographer can preview the locked cover page (?cg_preview=locked).
 		$preview = CG_Access::is_admin() && isset( $_GET['cg_preview'] ) && 'password' === CG_Galleries::setting( $gid, 'visibility' ); // phpcs:ignore WordPress.Security.NonceVerification
 
-		if ( 'password' === $block || $preview ) {
+		$mid_form = ! empty( self::$access ) && ( ! empty( self::$access['need_name'] ) || ! empty( self::$access['error'] ) ) && 'password' === CG_Galleries::setting( $gid, 'visibility' );
+		if ( 'password' === $block || $preview || $mid_form ) {
 			self::set_page_kind( 'gallery' ); // Same layout as the gallery: cover photo to the top.
 			$GLOBALS['cg_view'] = array(
 				'gallery_id' => $gid,

@@ -175,3 +175,14 @@
 /* Note to the photographer at the top of a gallery */
 .ch-adminbar { margin: 0; padding: 8px var(--ch-space-3); background: var(--ch-ink); color: var(--ch-surface); font-size: 13px; line-height: 20px; text-align: center; }
 .ch-adminbar a { color: var(--ch-tan); margin-left: 8px; }
+
+/* Locked gallery: "sign in with your email" */
+.ch-unlock--email { margin-top: var(--ch-space-3); }
+.ch-unlock--email summary { cursor: pointer; color: var(--ch-on-photo); font-size: 13px; line-height: 20px; text-decoration: underline; text-underline-offset: 3px; list-style: none; }
+.ch-unlock--email summary::-webkit-details-marker { display: none; }
+.ch-unlock--email[open] summary { margin-bottom: var(--ch-space-2); }
+.ch-unlock__stack { display: grid; gap: var(--ch-space-2); }
+.ch-unlock__stack .ch-unlock__label { margin: var(--ch-space-1) 0 0; }
+.ch-unlock__note { margin: var(--ch-space-2) 0 0; font-size: 12px; line-height: 18px; color: rgba(255, 255, 255, .85); }
+.ch-adminbar--tan { background: var(--ch-tan-strong); color: var(--ch-on-tan); }
+.ch-cover--locked .ch-cover__body { padding-bottom: 120px; }

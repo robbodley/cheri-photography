@@ -8,6 +8,7 @@
  * @var string $redirect
  * @var int    $uid
  * @var string $token
+ * @var string $signup
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -30,6 +31,9 @@ include cg_template( 'parts/page-start.php' );
 					);
 					?>
 				</p>
+			<?php elseif ( 'confirm_signup' === $state ) : ?>
+				<h1 class="ch-sh__title"><?php esc_html_e( 'Confirm your email', 'cheri-gallery' ); ?></h1>
+				<p class="ch-sh__intro"><?php echo esc_html( sprintf( /* translators: %s: email */ __( 'Press the button to confirm %s and open the gallery.', 'cheri-gallery' ), $email ) ); ?></p>
 			<?php elseif ( 'confirm' === $state ) : ?>
 				<h1 class="ch-sh__title"><?php esc_html_e( 'Welcome back', 'cheri-gallery' ); ?></h1>
 				<p class="ch-sh__intro"><?php esc_html_e( 'Press the button to sign in to your galleries.', 'cheri-gallery' ); ?></p>
@@ -39,7 +43,14 @@ include cg_template( 'parts/page-start.php' );
 			<?php endif; ?>
 		</div>
 
-		<?php if ( 'confirm' === $state ) : ?>
+		<?php if ( 'confirm_signup' === $state ) : ?>
+			<form class="ch-gate__form" method="post" action="<?php echo esc_url( home_url( 'client-login/' ) ); ?>">
+				<?php wp_nonce_field( 'cg_confirm_signup' ); ?>
+				<input type="hidden" name="cg_action" value="confirm_signup">
+				<input type="hidden" name="cg_confirm" value="<?php echo esc_attr( $signup ); ?>">
+				<button class="ch-btn" type="submit"><?php esc_html_e( 'Confirm and open the gallery', 'cheri-gallery' ); ?></button>
+			</form>
+		<?php elseif ( 'confirm' === $state ) : ?>
 			<form class="ch-gate__form" method="post" action="<?php echo esc_url( home_url( 'client-login/' ) ); ?>">
 				<?php wp_nonce_field( 'cg_use_link' ); ?>
 				<input type="hidden" name="cg_action" value="use_link">

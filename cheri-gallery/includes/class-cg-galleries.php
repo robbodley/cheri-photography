@@ -82,6 +82,7 @@ class CG_Galleries {
 	public static function setting_defaults() {
 		return array(
 			'clients'          => array(),
+			'guests'           => array(), // Signed themselves up with the gallery password.
 			'session_type'     => 'wedding',
 			'event_date'       => '',
 			'cover_photo'      => 0,
@@ -109,6 +110,7 @@ class CG_Galleries {
 		$saved = get_post_meta( $gallery_id, '_cg_settings', true );
 		$s     = wp_parse_args( is_array( $saved ) ? $saved : array(), self::setting_defaults() );
 		$s['clients'] = array_values( array_filter( array_map( 'absint', (array) $s['clients'] ) ) );
+		$s['guests']  = array_values( array_diff( array_filter( array_map( 'absint', (array) $s['guests'] ) ), $s['clients'] ) );
 		$s['sets']    = array_values( array_filter( array_map( 'strval', (array) $s['sets'] ), 'strlen' ) );
 		if ( empty( $s['sets'] ) ) {
 			$s['sets'] = array( __( 'Highlights', 'cheri-gallery' ) );
@@ -130,6 +132,10 @@ class CG_Galleries {
 		if ( isset( $input['clients'] ) ) {
 			$s['clients'] = array_values( array_unique( array_filter( array_map( 'absint', (array) $input['clients'] ) ) ) );
 		}
+		if ( isset( $input['guests'] ) ) {
+			$s['guests'] = array_values( array_unique( array_filter( array_map( 'absint', (array) $input['guests'] ) ) ) );
+		}
+		$s['guests'] = array_values( array_diff( (array) $s['guests'], $s['clients'] ) ); // A client is never also a guest.
 		if ( isset( $input['session_type'] ) && array_key_exists( $input['session_type'], cg_session_types() ) ) {
 			$s['session_type'] = $input['session_type'];
 		}
@@ -239,7 +245,7 @@ class CG_Galleries {
 			array_filter(
 				$all,
 				function ( $post ) use ( $user_id ) {
-					return in_array( $user_id, self::setting( $post->ID, 'clients' ), true );
+					return '' !== self::role_on( $post->ID, $user_id );
 				}
 			)
 		);
@@ -276,12 +282,40 @@ class CG_Galleries {
 	}
 
 	/**
+	 * How a person belongs to a gallery: 'client' (added by Cheri), 'guest' (signed up with the
+	 * gallery password and confirmed their email) or '' (not at all).
+	 */
+	public static function role_on( $gallery_id, $user_id ) {
+		$user_id = absint( $user_id );
+		if ( ! $user_id ) {
+			return '';
+		}
+		if ( in_array( $user_id, self::setting( $gallery_id, 'clients' ), true ) ) {
+			return 'client';
+		}
+		return in_array( $user_id, self::setting( $gallery_id, 'guests' ), true ) ? 'guest' : '';
+	}
+
+	/**
+	 * Add someone as a guest (no-op if they're already a client).
+	 */
+	public static function add_guest( $gallery_id, $user_id ) {
+		if ( '' !== self::role_on( $gallery_id, $user_id ) ) {
+			return;
+		}
+		$guests   = self::setting( $gallery_id, 'guests' );
+		$guests[] = absint( $user_id );
+		self::save( $gallery_id, array( 'guests' => $guests ) );
+	}
+
+	/**
 	 * Add or remove one client on a gallery.
 	 */
 	public static function link_client( $gallery_id, $user_id, $add = true ) {
 		$clients = self::setting( $gallery_id, 'clients' );
 		$clients = $add ? array_merge( $clients, array( absint( $user_id ) ) ) : array_diff( $clients, array( absint( $user_id ) ) );
-		self::save( $gallery_id, array( 'clients' => array_values( array_unique( $clients ) ) ) );
+		$guests  = array_diff( self::setting( $gallery_id, 'guests' ), array( absint( $user_id ) ) );
+		self::save( $gallery_id, array( 'clients' => array_values( array_unique( $clients ) ), 'guests' => array_values( $guests ) ) );
 		self::sync_client_index( $gallery_id );
 	}
 

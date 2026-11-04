@@ -180,6 +180,26 @@ class CG_Email {
 	/* Alerts to Cheri                                                     */
 	/* ------------------------------------------------------------------ */
 
+	public static function notify_new_guest( $user, $gallery_id ) {
+		/* translators: 1: name, 2: gallery */
+		$subject = sprintf( __( '%1$s signed up to %2$s', 'cheri-gallery' ), $user->display_name, get_the_title( $gallery_id ) );
+		$text    = sprintf(
+			/* translators: 1: name, 2: email, 3: gallery */
+			__( '%1$s (%2$s) used the gallery password to sign up to %3$s and confirmed their email. They\'re a guest: they can view and make favourites. Make them a client on the gallery if they should have client downloads.', 'cheri-gallery' ),
+			$user->display_name,
+			$user->user_email,
+			get_the_title( $gallery_id )
+		);
+		$html = cg_render(
+			'email-layout.php',
+			array(
+				'settings' => CG_Settings::all(),
+				'content'  => '<p style="margin:0;">' . esc_html( $text ) . '</p>',
+			)
+		);
+		self::send( CG_Settings::get( 'notify_email' ), $subject, $html, $text );
+	}
+
 	public static function notify_favourites_sent( $list ) {
 		if ( ! $list ) {
 			return;

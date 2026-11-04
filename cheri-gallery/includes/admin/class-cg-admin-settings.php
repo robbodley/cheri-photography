@@ -105,6 +105,7 @@ class CG_Admin_Settings {
 
 						<div class="ch-set__group">
 							<p class="ch-set__h"><?php esc_html_e( 'Pages', 'cheri-gallery' ); ?></p>
+							<?php CG_Admin::toggle( 'password_signin', $s['password_signin'], __( 'Clients sign in with their email and the gallery password', 'cheri-gallery' ), __( 'Clients you\'ve added to a gallery go straight in, with no email link. Anyone who has the forwarded email knows the password, so they could sign in as the client and download. Turn off to always use email links.', 'cheri-gallery' ) ); ?>
 							<?php
 							$cg_header_choices = array(
 								'none'    => __( 'No header (cover photo to the top)', 'cheri-gallery' ),
@@ -260,6 +261,7 @@ class CG_Admin_Settings {
 			'location'          => sanitize_text_field( $p['location'] ?? '' ),
 			'default_watermark' => isset( $styles[ $p['default_watermark'] ?? '' ] ) ? $p['default_watermark'] : 'off',
 			'web_size'          => min( 4096, max( 1200, absint( $p['web_size'] ?? 2048 ) ) ),
+			'password_signin'   => empty( $p['password_signin'] ) ? 0 : 1,
 			'jpeg_quality'      => min( 95, max( 60, absint( $p['jpeg_quality'] ?? 86 ) ) ),
 			'gallery_header'    => in_array( $p['gallery_header'] ?? '', array( 'none', 'theme', 'gallery' ), true ) ? $p['gallery_header'] : 'none',
 			'pages_header'      => ( $p['pages_header'] ?? '' ) === 'gallery' ? 'gallery' : 'theme',

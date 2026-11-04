@@ -181,6 +181,29 @@ class CG_Admin_Gallery {
 					</li>
 				<?php endforeach; ?>
 			</ul>
+			<?php if ( $s['guests'] ) : ?>
+				<span class="cg-label"><?php esc_html_e( 'Guests (signed up themselves)', 'cheri-gallery' ); ?></span>
+				<ul class="cg-chips cg-chips--guests" data-cg-guests>
+					<?php
+					foreach ( $s['guests'] as $gid_user ) :
+						$gu = get_userdata( $gid_user );
+						if ( ! $gu ) {
+							continue;
+						}
+						?>
+						<li class="cg-chip cg-chip--guest" data-id="<?php echo esc_attr( $gid_user ); ?>">
+							<input type="hidden" name="cg[guests][]" value="<?php echo esc_attr( $gid_user ); ?>">
+							<span class="cg-chip__name"><?php echo esc_html( $gu->display_name ); ?><small><?php echo esc_html( $gu->user_email ); ?></small></span>
+							<span class="cg-chip__btns">
+								<button type="button" class="cg-chip__promote" data-cg-guest-promote><?php esc_html_e( 'Make client', 'cheri-gallery' ); ?></button>
+								<button type="button" class="cg-chip__remove" data-cg-guest-remove>✕</button>
+							</span>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+				<p class="cg-hint"><?php esc_html_e( 'Guests can view and make favourites. Make them a client for client downloads.', 'cheri-gallery' ); ?></p>
+			<?php endif; ?>
+			<input type="hidden" name="cg[guests][]" value="0">
 			<p class="cg-hint" data-cg-chips-empty <?php echo $s['clients'] ? 'hidden' : ''; ?>><?php esc_html_e( 'No client yet. Add one below so they can sign in, favourite and download.', 'cheri-gallery' ); ?></p>
 			<select class="ch-select cg-add-client" name="cg[clients][]" data-cg-add-client aria-label="<?php esc_attr_e( 'Add a client', 'cheri-gallery' ); ?>">
 				<option value=""><?php esc_html_e( '+ Add a client…', 'cheri-gallery' ); ?></option>

@@ -2,6 +2,14 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.8.0
+
+- On a locked gallery, "Sign in with your email to save favourites" takes an email and the gallery password:
+  - A client you've added to the gallery goes straight in, with no email link. You can turn this off in Settings → Pages.
+  - Anyone new adds their first name and gets an email link to confirm their address. Once confirmed they're signed in and join the gallery as a guest, and you get an email.
+- Guests can view and make their own favourites. They can only download if "Who can download" is set to "Anyone who can view". Guests are listed on the gallery's Client & shoot box, where "Make client" promotes them.
+- Admin and editor accounts can never sign in with a gallery password.
+
 ## 0.7.0
 
 - A password-protected gallery now opens on its full-screen cover photo with the names and date, and the password box where "View gallery" normally is (plus "Client? Sign in instead"). The other photos stay locked until the password is entered or the client signs in.

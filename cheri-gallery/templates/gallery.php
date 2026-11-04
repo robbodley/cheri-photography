@@ -23,6 +23,18 @@ include cg_template( 'parts/page-start.php' );
 		<?php endif; ?>
 	</p>
 <?php endif; ?>
+<?php
+$cg_notice = isset( $_GET['cg_notice'] ) ? sanitize_key( $_GET['cg_notice'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+if ( 'confirm' === $cg_notice || 'link' === $cg_notice ) :
+	?>
+	<p class="ch-adminbar ch-adminbar--tan" role="status">
+		<?php
+		echo 'confirm' === $cg_notice
+			? esc_html__( 'Nearly there: we\'ve emailed you a link to confirm your address. Once you click it you can save favourites.', 'cheri-gallery' )
+			: esc_html__( 'We\'ve emailed you a sign-in link. Click it to save favourites and download.', 'cheri-gallery' );
+		?>
+	</p>
+<?php endif; ?>
 <section class="ch-cover" id="cg-cover">
 	<?php if ( $v['cover'] ) : ?>
 		<div class="ch-cover__img"><img src="<?php echo esc_url( CG_Delivery::photo_url( $v['cover'], 'web' ) ); ?>" alt="" fetchpriority="high" style="object-position: <?php echo esc_attr( CG_Galleries::cover_css_position( $gid ) ); ?>"></div>
