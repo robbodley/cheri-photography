@@ -3,6 +3,7 @@
  * Grid of album cards.
  *
  * @var WP_Post[] $galleries
+ * @var int       $columns   Fixed number of columns (0 = fit as many as the width allows).
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -10,13 +11,14 @@ defined( 'ABSPATH' ) || exit;
 if ( ! $galleries ) {
 	return;
 }
+$columns = isset( $columns ) ? (int) $columns : 0;
 $badge = array(
 	'public'   => array( 'globe', __( 'Public', 'cheri-gallery' ), '' ),
 	'password' => array( 'lock', __( 'Password', 'cheri-gallery' ), ' ch-badge--password' ),
 	'private'  => array( 'eyeoff', __( 'Private', 'cheri-gallery' ), ' ch-badge--private' ),
 );
 ?>
-<div class="ch-albums">
+<div class="ch-albums<?php echo $columns ? ' ch-albums--fixed' : ''; ?>"<?php echo $columns ? ' style="--cg-cols: ' . esc_attr( $columns ) . '"' : ''; ?>>
 	<?php
 	foreach ( $galleries as $g ) :
 		$s     = CG_Galleries::get( $g->ID );

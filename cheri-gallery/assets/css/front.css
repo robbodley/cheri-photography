@@ -360,3 +360,10 @@
 .cg-page.cg-overlay { background: none; margin: 0; }
 .cg-page .ch-grid--embed { --cg-gap: 8px; padding: 0; column-gap: var(--cg-gap) !important; }
 .cg-page .ch-grid--embed .ch-grid__item { display: block; break-inside: avoid; margin: 0 0 var(--cg-gap) !important; padding: 0 !important; }
+.cg-page .ch-albums--fixed { grid-template-columns: repeat(var(--cg-cols, 3), minmax(0, 1fr)); }
+@media (max-width: 900px) {
+.cg-page .ch-albums--fixed { grid-template-columns: repeat(min(var(--cg-cols, 3), 2), minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+.cg-page .ch-albums--fixed { grid-template-columns: minmax(0, 1fr); }
+}

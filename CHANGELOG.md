@@ -2,6 +2,12 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.10.0
+
+- Featured galleries for your home page. In a gallery's Settings → Who can see it, choose "Featured on the home page" position 1–6, then add `[cheri_galleries featured="yes"]` to the page. You get your picks in that order, three to a row (two on tablets, one on phones), up to 6. Picking a position that's taken moves the other gallery out of it.
+- `[cheri_galleries]` gains a `columns` option (1–6). The galleries list in WordPress shows a Featured column.
+- The same rules as always: private and closed galleries are never shown.
+
 ## 0.9.2
 
 - The gallery page is back to its original photo layout. The spacing fix from 0.9.1 now only applies to galleries embedded on other pages with the shortcode.

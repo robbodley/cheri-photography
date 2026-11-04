@@ -361,12 +361,18 @@ class CG_Frontend {
 	public static function shortcode( $atts ) {
 		$atts = shortcode_atts(
 			array(
-				'type'  => '',
-				'limit' => 24,
+				'type'     => '',
+				'limit'    => 0,
+				'featured' => 'no',
+				'columns'  => 0,
 			),
 			$atts,
 			'cheri_galleries'
 		);
+		$featured = 'yes' === strtolower( (string) $atts['featured'] );
+		$limit    = absint( $atts['limit'] ) ? absint( $atts['limit'] ) : ( $featured ? 6 : 24 );
+		$columns  = absint( $atts['columns'] ) ? min( 6, max( 1, absint( $atts['columns'] ) ) ) : ( $featured ? 3 : 0 );
+		self::register_assets();
 		wp_enqueue_style( 'cg-gallery' );
 
 		$posts = get_posts(
@@ -381,18 +387,34 @@ class CG_Frontend {
 		$cards = array();
 		foreach ( $posts as $post ) {
 			$s = CG_Galleries::get( $post->ID );
-			if ( empty( $s['list_publicly'] ) || 'private' === $s['visibility'] || CG_Galleries::is_expired( $post->ID ) ) {
+			// The same rules as always: never private or closed galleries.
+			if ( 'private' === $s['visibility'] || CG_Galleries::is_expired( $post->ID ) ) {
+				continue;
+			}
+			// Featured: picked with a home-page position. Otherwise: "Show on the galleries page".
+			if ( $featured ? empty( $s['featured'] ) : empty( $s['list_publicly'] ) ) {
 				continue;
 			}
 			if ( $atts['type'] && $atts['type'] !== $s['session_type'] ) {
 				continue;
 			}
 			$cards[] = $post;
-			if ( count( $cards ) >= (int) $atts['limit'] ) {
-				break;
-			}
 		}
-		return '<div class="cg-page cg-embed">' . cg_render( 'parts/album-grid.php', array( 'galleries' => $cards ) ) . '</div>';
+		if ( $featured ) {
+			usort(
+				$cards,
+				function ( $a, $b ) {
+					return (int) CG_Galleries::setting( $a->ID, 'featured' ) - (int) CG_Galleries::setting( $b->ID, 'featured' );
+				}
+			);
+		}
+		$cards = array_slice( $cards, 0, $limit );
+		if ( ! $cards ) {
+			return current_user_can( CG_CAP ) && $featured
+				? '<p style="padding:12px;border:1px dashed #a4443a;color:#a4443a;">' . esc_html__( 'Cheri Gallery: no featured galleries yet. Pick a "Featured on the home page" position in a gallery\'s Settings. (Only you can see this note.)', 'cheri-gallery' ) . '</p>'
+				: '';
+		}
+		return '<div class="cg-page cg-embed">' . cg_render( 'parts/album-grid.php', array( 'galleries' => $cards, 'columns' => $columns ) ) . '</div>';
 	}
 
 	/** Set once the gallery script has been set up for embeds on this page. */

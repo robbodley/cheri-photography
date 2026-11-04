@@ -91,6 +91,7 @@ class CG_Galleries {
 			'password'         => '',
 			'private_key'      => '',
 			'list_publicly'    => 0,
+			'featured'         => 0, // Home-page position 1–6; 0 = not featured.
 			'album_download'   => 1,
 			'photo_download'   => 1,
 			'download_size'    => 'full',
@@ -145,6 +146,9 @@ class CG_Galleries {
 		}
 		if ( isset( $input['expiry'] ) ) {
 			$s['expiry'] = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $input['expiry'] ) ? $input['expiry'] : '';
+		}
+		if ( isset( $input['featured'] ) ) {
+			$s['featured'] = min( 6, absint( $input['featured'] ) );
 		}
 		if ( isset( $input['cover_position'] ) && in_array( $input['cover_position'], array( 'top', 'center', 'bottom' ), true ) ) {
 			$s['cover_position'] = $input['cover_position'];

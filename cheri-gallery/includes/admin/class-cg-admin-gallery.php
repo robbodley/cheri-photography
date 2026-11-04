@@ -64,6 +64,7 @@ class CG_Admin_Gallery {
 			'cg_client'     => __( 'Client', 'cheri-gallery' ),
 			'cg_type'       => __( 'Type', 'cheri-gallery' ),
 			'cg_visibility' => __( 'Who can see it', 'cheri-gallery' ),
+			'cg_featured'   => __( 'Featured', 'cheri-gallery' ),
 			'cg_photos'     => __( 'Photos', 'cheri-gallery' ),
 			'cg_date'       => __( 'Shoot date', 'cheri-gallery' ),
 		);
@@ -84,6 +85,9 @@ class CG_Admin_Gallery {
 				break;
 			case 'cg_type':
 				echo esc_html( cg_session_label( $s['session_type'] ) );
+				break;
+			case 'cg_featured':
+				echo $s['featured'] ? '★ ' . esc_html( $s['featured'] ) : '—';
 				break;
 			case 'cg_visibility':
 				$labels = array(
@@ -269,6 +273,29 @@ class CG_Admin_Gallery {
 					<?php endif; ?>
 				</div>
 				<?php CG_Admin::toggle( 'cg[list_publicly]', $s['list_publicly'], __( 'Show on the galleries page', 'cheri-gallery' ), __( 'Lists it in the [cheri_galleries] shortcode. Never for private galleries.', 'cheri-gallery' ) ); ?>
+				<label class="ch-toggle">
+					<span class="ch-toggle__text">
+						<span class="ch-toggle__label"><?php esc_html_e( 'Featured on the home page', 'cheri-gallery' ); ?></span>
+						<span class="ch-toggle__hint"><?php esc_html_e( 'Shown by [cheri_galleries featured="yes"] in this position (up to 6). Never for private or closed galleries.', 'cheri-gallery' ); ?></span>
+					</span>
+					<select class="ch-select" name="cg[featured]">
+						<option value="0" <?php selected( (int) $s['featured'], 0 ); ?>><?php esc_html_e( 'Not featured', 'cheri-gallery' ); ?></option>
+						<?php
+						$cg_taken = array();
+						foreach ( CG_Galleries::all_published( true ) as $cg_other ) {
+							$pos = (int) CG_Galleries::setting( $cg_other->ID, 'featured' );
+							if ( $pos && (int) $cg_other->ID !== (int) $post->ID ) {
+								$cg_taken[ $pos ] = get_the_title( $cg_other );
+							}
+						}
+						for ( $i = 1; $i <= 6; $i++ ) :
+							/* translators: %d: position */
+							$label = sprintf( __( 'Position %d', 'cheri-gallery' ), $i ) . ( isset( $cg_taken[ $i ] ) ? ' (' . sprintf( /* translators: %s: gallery */ __( 'now: %s', 'cheri-gallery' ), $cg_taken[ $i ] ) . ')' : '' );
+							?>
+							<option value="<?php echo esc_attr( $i ); ?>" <?php selected( (int) $s['featured'], $i ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endfor; ?>
+					</select>
+				</label>
 			</div>
 
 			<div class="ch-set__group">
@@ -477,6 +504,13 @@ class CG_Admin_Gallery {
 		$input  = isset( $_POST['cg'] ) && is_array( $_POST['cg'] ) ? wp_unslash( $_POST['cg'] ) : array(); // phpcs:ignore
 		$before = CG_Galleries::get( $post_id );
 		$after  = CG_Galleries::save( $post_id, $input );
+		if ( $after['featured'] && $after['featured'] !== (int) $before['featured'] ) {
+			foreach ( CG_Galleries::all_published( true ) as $other ) {
+				if ( (int) $other->ID !== (int) $post_id && (int) CG_Galleries::setting( $other->ID, 'featured' ) === (int) $after['featured'] ) {
+					CG_Galleries::save( $other->ID, array( 'featured' => 0 ) );
+				}
+			}
+		}
 		CG_Galleries::sync_client_index( $post_id );
 
 		if ( $before['watermark'] !== $after['watermark'] || $before['download_size'] !== $after['download_size'] ) {
