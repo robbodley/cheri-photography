@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.8.1
+
+- The Client sign in page now has an optional Gallery password box. With it, a client of that gallery goes straight in, and someone new adds their first name and confirms by email. Left empty, it emails a sign-in link as before.
+
 ## 0.8.0
 
 - On a locked gallery, "Sign in with your email to save favourites" takes an email and the gallery password:

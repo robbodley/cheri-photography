@@ -88,6 +88,7 @@ class CG_Auth {
 		$uid   = isset( $_GET['u'] ) ? absint( $_GET['u'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		$token = isset( $_GET['t'] ) ? sanitize_text_field( wp_unslash( $_GET['t'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
+		$need_name = '';
 		$signup = isset( $_REQUEST['cg_confirm'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['cg_confirm'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['cg_action'] ) && 'confirm_signup' === $_POST['cg_action'] ) { // phpcs:ignore
@@ -111,8 +112,16 @@ class CG_Auth {
 		} elseif ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['cg_action'] ) ) { // phpcs:ignore
 			$action = sanitize_key( $_POST['cg_action'] ); // phpcs:ignore
 			if ( 'send_link' === $action && check_admin_referer( 'cg_send_link' ) ) {
-				$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-				if ( ! is_email( $email ) ) {
+				$email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+				$password = isset( $_POST['gallery_password'] ) ? (string) wp_unslash( $_POST['gallery_password'] ) : '';
+				$pw_ok    = isset( $_POST['cg_pw_ok'] ) ? sanitize_text_field( wp_unslash( $_POST['cg_pw_ok'] ) ) : '';
+				$first    = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+				if ( is_email( $email ) && ( '' !== $password || '' !== $pw_ok ) ) {
+					$result = self::password_route( $email, $password, $pw_ok, $first, $redirect );
+					$state     = $result['state'];
+					$message   = $result['message'] ?? '';
+					$need_name = $result['need_name'] ?? '';
+				} elseif ( ! is_email( $email ) ) {
 					$state   = 'ask';
 					$message = __( 'Enter the email address Cheri has for you.', 'cheri-gallery' );
 				} else {
@@ -158,6 +167,7 @@ class CG_Auth {
 				'uid'      => $uid,
 				'token'    => $token,
 				'signup'   => $signup,
+				'need_name' => $need_name,
 			)
 		);
 		exit;
@@ -307,6 +317,89 @@ class CG_Auth {
 		$subject = sprintf( __( 'Confirm your email for %s', 'cheri-gallery' ), $gallery );
 		$text    = sprintf( /* translators: 1: gallery, 2: link */ __( "Confirm your email to open %1\$s and save your favourites:\n%2\$s\n\nThe link lasts 24 hours.", 'cheri-gallery' ), $gallery, $link );
 		return CG_Email::send( $email, $subject, $html, $text );
+	}
+
+	/**
+	 * Sign-in page with a gallery password: a client of that gallery goes straight in; someone new
+	 * (or not yet on that gallery) confirms their email first and joins as a guest.
+	 *
+	 * @return array state ('ask' | 'sent' | 'signup_sent'), message, need_name (token for the name step).
+	 */
+	private static function password_route( $email, $password, $pw_ok, $first, $redirect ) {
+		$user = get_user_by( 'email', $email );
+
+		// Name step: the password was checked a moment ago; carry on without asking again.
+		if ( '' !== $pw_ok ) {
+			$key  = 'cg_pwok_' . hash_hmac( 'sha256', $pw_ok, wp_salt( 'auth' ) );
+			$data = get_transient( $key );
+			if ( ! is_array( $data ) || strtolower( $data['email'] ) !== strtolower( $email ) || $user ) {
+				return array( 'state' => 'ask', 'message' => __( 'Please enter the gallery password again.', 'cheri-gallery' ) );
+			}
+			if ( '' === $first ) {
+				return array( 'state' => 'ask', 'need_name' => $pw_ok, 'message' => __( 'Add your first name.', 'cheri-gallery' ) );
+			}
+			delete_transient( $key );
+			self::start_signup( $email, $first, $data['gallery'] );
+			return array( 'state' => 'signup_sent' );
+		}
+
+		if ( ! cg_rate_limit( 'pwlogin|' . cg_client_ip(), 10, 10 * MINUTE_IN_SECONDS ) ) {
+			return array( 'state' => 'ask', 'message' => __( 'Too many tries. Wait ten minutes and try again.', 'cheri-gallery' ) );
+		}
+		$gid = self::gallery_for_password( $password, $redirect, $user );
+		if ( ! $gid ) {
+			return array( 'state' => 'ask', 'message' => __( 'That gallery password doesn\'t match. Check your email from Cheri (it\'s case-sensitive), or leave it empty and we\'ll email you a link.', 'cheri-gallery' ) );
+		}
+		CG_Access::grant( $gid, 'pass' );
+		$target = ( ! $redirect || self::account_url() === $redirect ) ? get_permalink( $gid ) : $redirect;
+
+		if ( $user && ! self::can_password_signin( $user ) ) {
+			return array( 'state' => 'ask', 'message' => __( 'For this email, leave the gallery password empty and we\'ll email you a link.', 'cheri-gallery' ) );
+		}
+		$role = $user ? CG_Galleries::role_on( $gid, $user->ID ) : '';
+		if ( $user && '' !== $role ) {
+			if ( CG_Settings::get( 'password_signin' ) ) {
+				self::sign_in( $user->ID );
+				wp_safe_redirect( $target );
+				exit;
+			}
+			self::send_link( $user, $target );
+			return array( 'state' => 'sent' );
+		}
+		if ( $user ) { // Has an account, but isn't on this gallery yet: confirm by email, then join as a guest.
+			self::start_signup( $email, $user->first_name, $gid );
+			return array( 'state' => 'signup_sent' );
+		}
+		// Brand new: ask for a first name next, without asking for the password again.
+		$token = wp_generate_password( 24, false, false );
+		set_transient( 'cg_pwok_' . hash_hmac( 'sha256', $token, wp_salt( 'auth' ) ), array( 'email' => $email, 'gallery' => $gid ), 15 * MINUTE_IN_SECONDS );
+		return array( 'state' => 'ask', 'need_name' => $token );
+	}
+
+	/**
+	 * Which gallery a typed password opens: the one being signed in to (from redirect_to) if it
+	 * matches, otherwise a password gallery the person belongs to, otherwise any with that password.
+	 */
+	private static function gallery_for_password( $password, $redirect, $user ) {
+		$matches = function ( $gid ) use ( $password ) {
+			$real = (string) CG_Galleries::setting( $gid, 'password' );
+			return 'password' === CG_Galleries::setting( $gid, 'visibility' ) && '' !== $real && hash_equals( $real, $password );
+		};
+		$from = $redirect ? url_to_postid( $redirect ) : 0;
+		if ( $from && CG_Galleries::is_gallery( $from ) && $matches( $from ) ) {
+			return $from;
+		}
+		$found = 0;
+		foreach ( CG_Galleries::all_published() as $g ) {
+			if ( ! $matches( $g->ID ) ) {
+				continue;
+			}
+			if ( $user && '' !== CG_Galleries::role_on( $g->ID, $user->ID ) ) {
+				return $g->ID;
+			}
+			$found = $found ? $found : $g->ID;
+		}
+		return $found;
 	}
 
 	private static function signup_key( $token ) {
