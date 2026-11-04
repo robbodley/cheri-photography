@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.9.2
+
+- The gallery page is back to its original photo layout. The spacing fix from 0.9.1 now only applies to galleries embedded on other pages with the shortcode.
+
 ## 0.9.1
 
 - Fixes missing space between photos stacked above each other when a theme or Elementor overrides the gallery's spacing.

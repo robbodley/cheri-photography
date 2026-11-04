@@ -196,7 +196,7 @@
 .ch-embed__more { text-align: center; margin: var(--ch-space-4) 0 0; }
 .cg-page.cg-overlay { background: none; margin: 0; }
 
-/* Photo spacing that themes and page builders can't override */
-.cg-page .ch-grid .ch-grid__item { display: inline-block; width: 100%; vertical-align: top; margin: 0 0 var(--cg-gap, var(--ch-space-1)) !important; padding: 0 !important; }
-.cg-page .ch-grid { column-gap: var(--cg-gap, var(--ch-space-1)) !important; }
-.cg-page .ch-grid--embed { --cg-gap: 8px; padding: 0; }
+/* Embedded galleries only: photo spacing that the page's theme / Elementor can't override.
+   (The gallery page itself keeps its own 4px layout.) */
+.cg-page .ch-grid--embed { --cg-gap: 8px; padding: 0; column-gap: var(--cg-gap) !important; }
+.cg-page .ch-grid--embed .ch-grid__item { display: block; break-inside: avoid; margin: 0 0 var(--cg-gap) !important; padding: 0 !important; }
