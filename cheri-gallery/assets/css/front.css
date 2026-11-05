@@ -374,3 +374,5 @@
 @media (max-width: 600px) {
 .cg-page .ch-cover__mark { width: 120px; }
 }
+.cg-page .ch-grid.is-cols { display: flex; align-items: flex-start; }
+.cg-page .ch-grid__col { flex: 1 1 0; min-width: 0; }

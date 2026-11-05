@@ -77,8 +77,55 @@
 		showSet(start, false);
 	}
 
+	/* ---------------------------------------------------------------- */
+	/* Photo grid: masonry that reads left to right                      */
+	/* ---------------------------------------------------------------- */
+	// The CSS lays photos out in columns (top to bottom, then the next column). Here we build
+	// the same columns ourselves and hand each photo, in order, to the shortest column, so
+	// photos 1-4 sit across the first row and the order reads left to right. The number of
+	// columns and the gap still come from the CSS, so the look and breakpoints are unchanged.
+	var grids = $$('.ch-grid');
+	grids.forEach(function (g) {
+		$$('.ch-grid__item', g).forEach(function (f, i) { f.setAttribute('data-cg-i', i); });
+	});
+	function byOrder(a, b) { return (+a.getAttribute('data-cg-i')) - (+b.getAttribute('data-cg-i')); }
+	function itemsInOrder(scope) { return $$('.ch-grid__item', scope).sort(byOrder); }
+	function ratio(f) {
+		var img = f.querySelector('img');
+		var w = img && parseFloat(img.getAttribute('width'));
+		var h = img && parseFloat(img.getAttribute('height'));
+		return w > 0 && h > 0 ? h / w : 1;
+	}
+	function layoutGrid(g, force) {
+		var n = parseInt(window.getComputedStyle(g).columnCount, 10) || 1;
+		if (!force && g._cgCols === n) { return; }
+		g._cgCols = n;
+		var items = itemsInOrder(g);
+		var cols = [], heights = [];
+		for (var c = 0; c < n; c++) {
+			cols.push(el('div', { 'class': 'ch-grid__col' }));
+			heights.push(0);
+		}
+		items.forEach(function (f) {
+			var k = 0;
+			for (var j = 1; j < n; j++) { if (heights[j] < heights[k] - 0.001) { k = j; } }
+			cols[k].appendChild(f);
+			if (!f.hidden) { heights[k] += ratio(f) + 0.02; } // 0.02: roughly the gap under each photo
+		});
+		$$('.ch-grid__col', g).forEach(function (old) { g.removeChild(old); });
+		cols.forEach(function (col) { g.appendChild(col); });
+		g.classList.add('is-cols');
+	}
+	function layoutGrids(force) { grids.forEach(function (g) { layoutGrid(g, force); }); }
+	layoutGrids(true);
+	var resizeTimer;
+	window.addEventListener('resize', function () {
+		clearTimeout(resizeTimer);
+		resizeTimer = setTimeout(function () { layoutGrids(false); }, 120);
+	});
+
 	function visibleItems(scope) {
-		return $$('.ch-grid__item', scope).filter(function (f) {
+		return itemsInOrder(scope).filter(function (f) {
 			var panel = f.closest('[data-cg-set-panel]');
 			return (!panel || !panel.hidden) && !f.hidden;
 		});
@@ -269,6 +316,7 @@
 			var id = parseInt(f.getAttribute('data-cg-photo'), 10);
 			f.hidden = !!(filterOn && l && l.photos.indexOf(id) === -1);
 		});
+		layoutGrids(true);
 	}
 
 	function openDrawer() {

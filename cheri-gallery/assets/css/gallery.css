@@ -212,3 +212,8 @@
 .cg-page .ch-cover__mark:hover { opacity: .85; }
 .cg-page .ch-cover__mark:focus-visible { outline: 2px solid #ffffff; outline-offset: 4px; }
 @media (max-width: 600px) { .cg-page .ch-cover__mark { width: 120px; } }
+
+/* Left-to-right masonry (gallery.js): the grid becomes a row of columns. The column count and
+   gap still come from column-count / column-gap above, so the look is unchanged. */
+.ch-grid.is-cols { display: flex; align-items: flex-start; }
+.ch-grid__col { flex: 1 1 0; min-width: 0; }

@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.11.2
+
+- Photos in the gallery now read left to right: 1, 2, 3, 4 across the top, then each next photo fills the shortest column. Before, they ran down the first column, then the second. The look (staggered photos, gaps, 4/3/2 columns) is the same, and it applies to embedded galleries too.
+
 ## 0.11.1
 
 - Uploads can be stopped. "Stop after this photo" lets the photo in progress finish, then stops and tells you how many uploaded, the last file name, and how many are still to go.
