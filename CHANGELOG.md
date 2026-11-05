@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.10.2
+
+- Fixes a white screen after pressing Sign in on a link you emailed from a client's page. The client was signed in, but the page didn't move on. It now goes to their My galleries page.
+
 ## 0.10.1
 
 - The Cheri logo at the bottom of a gallery's cover photo is 25% larger, and clicking it goes to your home page (the Website address in Settings).

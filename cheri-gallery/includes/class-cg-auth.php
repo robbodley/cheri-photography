@@ -73,7 +73,10 @@ class CG_Auth {
 
 	private static function safe_redirect_target() {
 		$raw = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-		return wp_validate_redirect( $raw, self::account_url() );
+		// wp_validate_redirect() hands back an empty string unchanged (not the fallback), and
+		// redirecting to '' does nothing: the page stopped on a white screen after signing in.
+		$to = '' === trim( (string) $raw ) ? '' : wp_validate_redirect( $raw, self::account_url() );
+		return '' === $to ? self::account_url() : $to;
 	}
 
 	private static function login_page() {
