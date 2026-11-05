@@ -72,7 +72,7 @@ include cg_template( 'parts/page-start.php' );
 			<a href="mailto:<?php echo esc_attr( CG_Settings::get( 'from_email' ) ); ?>"><?php esc_html_e( 'Lost the password?', 'cheri-gallery' ); ?></a>
 		</p>
 	</div>
-	<img class="ch-cover__mark ch-logo ch-logo--on-photo" src="<?php echo esc_url( CG_URL . 'assets/img/cheri-logo.png' ); ?>" alt="<?php echo esc_attr( CG_Settings::get( 'from_name' ) ); ?>">
+	<a class="ch-cover__mark" href="<?php echo esc_url( CG_Settings::get( 'website_url' ) ); ?>" title="<?php esc_attr_e( 'Back to the website', 'cheri-gallery' ); ?>"><img class="ch-logo ch-logo--on-photo" src="<?php echo esc_url( CG_URL . 'assets/img/cheri-logo.png' ); ?>" alt="<?php echo esc_attr( sprintf( /* translators: %s: studio name */ __( '%s home page', 'cheri-gallery' ), CG_Settings::get( 'from_name' ) ) ); ?>"></a>
 </section>
 <?php
 include cg_template( 'parts/page-end.php' );

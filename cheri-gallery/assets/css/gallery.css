@@ -205,3 +205,10 @@
 .ch-albums--fixed { grid-template-columns: repeat(var(--cg-cols, 3), minmax(0, 1fr)); }
 @media (max-width: 900px) { .ch-albums--fixed { grid-template-columns: repeat(min(var(--cg-cols, 3), 2), minmax(0, 1fr)); } }
 @media (max-width: 560px) { .ch-albums--fixed { grid-template-columns: minmax(0, 1fr); } }
+
+/* Cheri logo on the cover: 25% larger, and a link back to the website */
+.cg-page .ch-cover__mark { width: 150px; display: block; line-height: 0; }
+.cg-page .ch-cover__mark img { display: block; width: 100%; height: auto; }
+.cg-page .ch-cover__mark:hover { opacity: .85; }
+.cg-page .ch-cover__mark:focus-visible { outline: 2px solid #ffffff; outline-offset: 4px; }
+@media (max-width: 600px) { .cg-page .ch-cover__mark { width: 120px; } }

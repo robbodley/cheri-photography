@@ -48,7 +48,7 @@ if ( 'confirm' === $cg_notice || 'link' === $cg_notice ) :
 		<?php endif; ?>
 		<a class="ch-btn ch-btn--photo" href="#cg-photos"><?php esc_html_e( 'View gallery', 'cheri-gallery' ); ?></a>
 	</div>
-	<img class="ch-cover__mark ch-logo ch-logo--on-photo" src="<?php echo esc_url( CG_URL . 'assets/img/cheri-logo.png' ); ?>" alt="<?php echo esc_attr( CG_Settings::get( 'from_name' ) ); ?>">
+	<a class="ch-cover__mark" href="<?php echo esc_url( CG_Settings::get( 'website_url' ) ); ?>" title="<?php esc_attr_e( 'Back to the website', 'cheri-gallery' ); ?>"><img class="ch-logo ch-logo--on-photo" src="<?php echo esc_url( CG_URL . 'assets/img/cheri-logo.png' ); ?>" alt="<?php echo esc_attr( sprintf( /* translators: %s: studio name */ __( '%s home page', 'cheri-gallery' ), CG_Settings::get( 'from_name' ) ) ); ?>"></a>
 </section>
 
 <header class="ch-gh-wrap" id="cg-photos">

@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.10.1
+
+- The Cheri logo at the bottom of a gallery's cover photo is 25% larger, and clicking it goes to your home page (the Website address in Settings).
+
 ## 0.10.0
 
 - Featured galleries for your home page. In a gallery's Settings → Who can see it, choose "Featured on the home page" position 1–6, then add `[cheri_galleries featured="yes"]` to the page. You get your picks in that order, three to a row (two on tablets, one on phones), up to 6. Picking a position that's taken moves the other gallery out of it.
