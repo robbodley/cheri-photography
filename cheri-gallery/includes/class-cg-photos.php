@@ -85,6 +85,23 @@ class CG_Photos {
 		return $rows;
 	}
 
+	/**
+	 * Of the given upload file names, the ones already in this gallery (compared the way they're stored).
+	 */
+	public static function existing_names( $gallery_id, array $names ) {
+		global $wpdb;
+		$stored = $wpdb->get_col( $wpdb->prepare( 'SELECT original_name FROM ' . self::table() . ' WHERE gallery_id = %d', $gallery_id ) ); // phpcs:ignore
+		$have   = array_flip( array_map( 'strtolower', (array) $stored ) );
+		$found  = array();
+		foreach ( $names as $name ) {
+			$name = (string) $name;
+			if ( isset( $have[ strtolower( sanitize_file_name( $name ) ) ] ) ) {
+				$found[] = $name;
+			}
+		}
+		return $found;
+	}
+
 	public static function count( $gallery_id, $include_hidden = false ) {
 		global $wpdb;
 		$sql = 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE gallery_id = %d' . ( $include_hidden ? '' : ' AND hidden = 0' );

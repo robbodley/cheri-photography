@@ -48,6 +48,13 @@ class CG_Admin_Gallery {
 					'copied'      => __( 'Copied', 'cheri-gallery' ),
 					'leaveUpload' => __( 'Photos are still uploading. Leave anyway?', 'cheri-gallery' ),
 					'remove'      => __( 'Remove', 'cheri-gallery' ),
+					'checking'    => __( 'Checking which photos are already in this gallery…', 'cheri-gallery' ),
+					/* translators: %d: number of photos */
+					'skipped'     => __( '%d already in this gallery, skipped.', 'cheri-gallery' ),
+					'allThere'    => __( 'All of these photos are already in this gallery. Nothing to upload.', 'cheri-gallery' ),
+					'stopping'    => __( 'Stopping after this photo…', 'cheri-gallery' ),
+					/* translators: 1: uploaded count, 2: total, 3: last file name, 4: not uploaded count */
+					'stopped'     => __( 'Stopped. %1$d of %2$d uploaded; the last one was %3$s. %4$d not uploaded yet: select the folder again any time and only those will upload.', 'cheri-gallery' ),
 					/* translators: 1: number of photos, 2: set name */
 					'emptySet'    => __( 'Delete all %1$d photos in "%2$s"? They\'re removed from the gallery, from clients\' favourites and from your server, and this can\'t be undone.\n\nType DELETE to confirm.', 'cheri-gallery' ),
 					'emptyNone'   => __( 'There are no photos in this set.', 'cheri-gallery' ),
@@ -403,7 +410,10 @@ class CG_Admin_Gallery {
 				);
 				?>
 			</label>
-			<p class="cg-pm__status" data-cg-status role="status" aria-live="polite"></p>
+			<div class="cg-pm__statusrow">
+				<p class="cg-pm__status" data-cg-status role="status" aria-live="polite"></p>
+				<button type="button" class="button" data-cg-stop data-label="<?php esc_attr_e( 'Stop after this photo', 'cheri-gallery' ); ?>" hidden><?php esc_html_e( 'Stop after this photo', 'cheri-gallery' ); ?></button>
+			</div>
 
 			<div class="cg-pm__bulk" data-cg-bulk hidden>
 				<span data-cg-bulk-count></span>
@@ -557,6 +567,11 @@ class CG_Admin_Gallery {
 		$s   = CG_Galleries::get( $gid );
 
 		switch ( $op ) {
+			case 'existing':
+				$names = isset( $_POST['names'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['names'] ) ) : array(); // phpcs:ignore
+				cg_json_ok( array( 'existing' => CG_Photos::existing_names( $gid, array_slice( $names, 0, 2000 ) ) ) );
+				break;
+
 			case 'upload':
 				if ( empty( $_FILES['file'] ) ) {
 					cg_json_fail( __( 'No file received.', 'cheri-gallery' ) );

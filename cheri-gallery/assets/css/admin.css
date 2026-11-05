@@ -120,3 +120,5 @@
 .cg-pm__order { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ch-space-2); margin: 0 0 var(--ch-space-3); }
 .cg-pm__order label { font: 600 11px/16px var(--ch-font-sans); letter-spacing: .18em; text-transform: uppercase; color: var(--ch-ink-muted); }
 .cg-pm__order .cg-hint { margin: 0; }
+.cg-pm__statusrow { display: flex; align-items: center; gap: var(--ch-space-3); flex-wrap: wrap; margin: 0 0 var(--ch-space-2); }
+.cg-pm__statusrow .cg-pm__status { margin: 0; }

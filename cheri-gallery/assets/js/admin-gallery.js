@@ -223,19 +223,60 @@
 	}
 
 	/* ---------------- Upload ---------------- */
+	var stopBtn = $('[data-cg-stop]', pm);
+	var stopRequested = false;
+	if (stopBtn) {
+		stopBtn.addEventListener('click', function () {
+			stopRequested = true;
+			stopBtn.disabled = true;
+			stopBtn.textContent = T.stopping;
+		});
+	}
+
 	function uploadFiles(files) {
 		files = Array.prototype.slice.call(files).filter(function (f) { return /^image\/(jpeg|png|webp)$/.test(f.type); });
-		if (!files.length) { return; }
+		if (!files.length || uploading) { return; }
 		uploading = true;
+		stopRequested = false;
+		status.textContent = T.checking;
+		// Skip photos already in this gallery, before sending anything (slow connections).
+		post({ op: 'existing', names: files.map(function (f) { return f.name; }) }).then(function (d) {
+			var have = {};
+			(d.existing || []).forEach(function (n) { have[n] = true; });
+			return files.filter(function (f) { return !have[f.name]; });
+		}).catch(function () { return files; }).then(function (todo) {
+			var skipped = files.length - todo.length;
+			if (!todo.length) {
+				uploading = false;
+				status.textContent = T.allThere;
+				return;
+			}
+			startUploads(todo, skipped);
+		});
+	}
+
+	function startUploads(files, skipped) {
 		var failed = [];
 		var i = 0;
+		var uploaded = 0;
+		var lastName = '';
 		var set = currentSet;
+		var skippedNote = skipped ? ' ' + fmt(T.skipped, skipped) : '';
+		if (stopBtn) { stopBtn.hidden = false; stopBtn.disabled = false; stopBtn.textContent = stopBtn.getAttribute('data-label') || stopBtn.textContent; }
+		function finish(msg) {
+			uploading = false;
+			if (stopBtn) { stopBtn.hidden = true; }
+			status.textContent = msg + skippedNote;
+			applySetFilter();
+			post({ op: 'refresh' }).then(function (d) { applyOrder(d.order); }).catch(function () {});
+		}
 		function next() {
+			if (stopRequested && i < files.length) {
+				finish(fmt(T.stopped, uploaded, files.length, lastName || '-', files.length - i));
+				return;
+			}
 			if (i >= files.length) {
-				uploading = false;
-				status.textContent = failed.length ? fmt(T.failed, failed.length) + ' ' + failed.join('; ') : T.done;
-				applySetFilter();
-				post({ op: 'refresh' }).then(function (d) { applyOrder(d.order); }).catch(function () {});
+				finish(failed.length ? fmt(T.failed, failed.length) + ' ' + failed.join('; ') : T.done);
 				return;
 			}
 			var f = files[i++];
@@ -247,6 +288,8 @@
 			}
 			post({ op: 'upload', set: set }, f).then(function (data) {
 				grid.appendChild(fromHTML(data.html));
+				uploaded++;
+				lastName = f.name;
 				applySetFilter();
 			}).catch(function (err) {
 				failed.push(f.name + ' (' + err.message + ')');

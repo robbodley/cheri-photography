@@ -2,6 +2,11 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.11.1
+
+- Uploads can be stopped. "Stop after this photo" lets the photo in progress finish, then stops and tells you how many uploaded, the last file name, and how many are still to go.
+- Picking up where you left off: select the same photos (or the whole folder) again. Photos already in the gallery with the same file name are skipped before anything is sent, so nothing uploads twice.
+
 ## 0.11.0
 
 - Photo order for each gallery, in the Photos box: Name A–Z (the new default; a smart sort, so CP1, CP2 … CP10), Name Z–A, Upload order, or Upload order newest first. It applies to the gallery, slideshow, embeds and downloads.
