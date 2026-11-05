@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.10.3
+
+- When a client sends you their favourites, the email now shows their picks: small thumbnails (three across) with each file name, every file name in one line ready for Lightroom's search, and their note. The thumbnails are carried inside the email (up to 60 photos; every file name is always listed). The link to WordPress is gone.
+
 ## 0.10.2
 
 - Fixes a white screen after pressing Sign in on a link you emailed from a client's page. The client was signed in, but the page didn't move on. It now goes to their My galleries page.

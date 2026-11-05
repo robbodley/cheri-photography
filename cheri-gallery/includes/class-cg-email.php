@@ -10,6 +10,9 @@ class CG_Email {
 	/** Plain-text alternative for the message currently being sent. */
 	private static $alt_body = '';
 
+	/** Images to attach inline for the message being sent: [ [ 'path' => ..., 'cid' => ..., 'name' => ... ], ... ]. */
+	private static $embeds = array();
+
 	public static function init() {
 		add_action( 'phpmailer_init', array( __CLASS__, 'add_alt_body' ) );
 	}
@@ -19,7 +22,7 @@ class CG_Email {
 	 *
 	 * @param string|array $to Recipients.
 	 */
-	public static function send( $to, $subject, $html, $text = '' ) {
+	public static function send( $to, $subject, $html, $text = '', array $embeds = array() ) {
 		$from_email = CG_Settings::get( 'from_email' );
 		$from_name  = CG_Settings::get( 'from_name' );
 		$headers    = array(
@@ -28,8 +31,10 @@ class CG_Email {
 			sprintf( 'Reply-To: %s <%s>', self::header_safe( $from_name ), $from_email ),
 		);
 		self::$alt_body = $text ? $text : wp_strip_all_tags( $html );
+		self::$embeds   = $embeds;
 		$ok             = wp_mail( $to, $subject, $html, $headers );
 		self::$alt_body = '';
+		self::$embeds   = array();
 		return $ok;
 	}
 
@@ -41,6 +46,52 @@ class CG_Email {
 		if ( self::$alt_body ) {
 			$phpmailer->AltBody = self::$alt_body; // phpcs:ignore WordPress.NamingConventions.ValidVariableName
 		}
+		// Thumbnails shown in the email body (src="cid:..."), carried inside the email itself.
+		foreach ( self::$embeds as $img ) {
+			try {
+				$phpmailer->addEmbeddedImage( $img['path'], $img['cid'], $img['name'], 'base64', 'image/jpeg' );
+			} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
+				// A missing thumbnail shouldn't stop the email.
+			}
+		}
+	}
+
+	/**
+	 * Small, clean JPEG thumbnails of photos for an email, written to the temp folder.
+	 *
+	 * @return array List of [ path, cid, name, photo ].
+	 */
+	private static function email_thumbs( array $photo_ids, $max = 60, $width = 240 ) {
+		$out = array();
+		$dir = trailingslashit( get_temp_dir() );
+		foreach ( array_slice( $photo_ids, 0, $max ) as $i => $pid ) {
+			$photo = CG_Photos::get( $pid );
+			if ( ! $photo ) {
+				continue;
+			}
+			$src = CG_Images::ensure( $photo, 'thumb', 'off' );
+			if ( ! $src ) {
+				continue;
+			}
+			$editor = wp_get_image_editor( $src );
+			if ( is_wp_error( $editor ) ) {
+				continue;
+			}
+			$editor->resize( $width, $width * 2, false );
+			$editor->set_quality( 72 );
+			$path  = $dir . 'cg-fav-' . absint( $pid ) . '-' . wp_generate_password( 6, false, false ) . '.jpg';
+			$saved = $editor->save( $path, 'image/jpeg' );
+			if ( is_wp_error( $saved ) ) {
+				continue;
+			}
+			$out[] = array(
+				'path'  => ! empty( $saved['path'] ) ? $saved['path'] : $path,
+				'cid'   => 'cgfav' . absint( $pid ) . '_' . $i,
+				'name'  => sanitize_file_name( $photo->original_name ),
+				'photo' => $photo,
+			);
+		}
+		return $out;
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -204,35 +255,73 @@ class CG_Email {
 		if ( ! $list ) {
 			return;
 		}
-		$user  = get_userdata( $list->user_id );
-		$who   = $user ? $user->display_name : __( 'A client', 'cheri-gallery' );
-		$count = count( CG_Favourites::photo_ids( $list->id ) );
-		$link  = admin_url( 'admin.php?page=cg-clients&client=' . absint( $list->user_id ) . '#list-' . absint( $list->id ) );
+		$user    = get_userdata( $list->user_id );
+		$who     = $user ? $user->display_name : __( 'A client', 'cheri-gallery' );
+		$ids     = CG_Favourites::photo_ids( $list->id );
+		$count   = count( $ids );
+		$names   = CG_Favourites::filenames( $list->id );
+		$gallery = get_the_title( $list->gallery_id );
 
 		/* translators: 1: client name, 2: list name */
 		$subject = sprintf( __( '%1$s sent "%2$s"', 'cheri-gallery' ), $who, $list->name );
-		$text    = sprintf(
-			/* translators: 1: client, 2: count, 3: list name, 4: gallery */
-			__( '%1$s sent %2$d photos in "%3$s" from %4$s.', 'cheri-gallery' ),
-			$who,
-			$count,
-			$list->name,
-			get_the_title( $list->gallery_id )
-		);
+		/* translators: 1: client, 2: count, 3: list name, 4: gallery */
+		$intro = sprintf( _n( '%1$s sent %2$d photo in "%3$s" from %4$s.', '%1$s sent %2$d photos in "%3$s" from %4$s.', $count, 'cheri-gallery' ), $who, $count, $list->name, $gallery );
+
+		$thumbs = self::email_thumbs( $ids );
+
+		// HTML: intro, note, thumbnail grid (3 across) with file names, then every file name in one line.
+		$h  = '<p style="margin:0 0 16px;">' . esc_html( $intro ) . '</p>';
+		if ( $list->note ) {
+			$h .= '<p style="margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6b625a;">' . esc_html__( 'Their note', 'cheri-gallery' ) . '</p>';
+			$h .= '<p style="margin:0 0 20px;padding:10px 14px;background:#fbf8f2;font-style:italic;">' . nl2br( esc_html( $list->note ) ) . '</p>';
+		}
+		if ( $thumbs ) {
+			$h .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;">';
+			foreach ( array_chunk( $thumbs, 3 ) as $row ) {
+				$h .= '<tr>';
+				foreach ( $row as $t ) {
+					$label = pathinfo( $t['photo']->original_name, PATHINFO_FILENAME );
+					$h    .= '<td width="33%" valign="top" style="padding:4px;">'
+						. '<img src="cid:' . esc_attr( $t['cid'] ) . '" width="160" alt="' . esc_attr( $label ) . '" style="display:block;width:100%;max-width:160px;height:auto;border:0;">'
+						. '<div style="font:12px/16px Arial,sans-serif;color:#2e2a27;padding-top:4px;word-break:break-all;">' . esc_html( $label ) . '</div>'
+						. '</td>';
+				}
+				for ( $pad = count( $row ); $pad < 3; $pad++ ) {
+					$h .= '<td width="33%" style="padding:4px;"></td>';
+				}
+				$h .= '</tr>';
+			}
+			$h .= '</table>';
+			if ( $count > count( $thumbs ) ) {
+				/* translators: %d: number of photos shown */
+				$h .= '<p style="margin:0 0 16px;font-size:12px;color:#6b625a;">' . esc_html( sprintf( __( 'Showing the first %d photos; every file name is listed below.', 'cheri-gallery' ), count( $thumbs ) ) ) . '</p>';
+			}
+		}
+		if ( $names ) {
+			$h .= '<p style="margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6b625a;">' . esc_html__( 'File names (paste into Lightroom\'s search)', 'cheri-gallery' ) . '</p>';
+			$h .= '<p style="margin:0;padding:10px 14px;background:#fbf8f2;font:13px/20px Menlo,Consolas,monospace;word-break:break-word;">' . esc_html( implode( ', ', $names ) ) . '</p>';
+		}
+
+		// Plain-text version.
+		$text = $intro;
 		if ( $list->note ) {
 			$text .= "\n\n" . __( 'Their note:', 'cheri-gallery' ) . "\n" . $list->note;
 		}
-		$html_body = '<p style="margin:0 0 16px;">' . nl2br( esc_html( $text ) ) . '</p>'
-			. '<p style="margin:0;"><a href="' . esc_url( $link ) . '" style="display:inline-block;background:#7d5f41;color:#ffffff;text-decoration:none;font:600 11px/16px Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;padding:12px 24px;">' . esc_html__( 'See their picks', 'cheri-gallery' ) . '</a></p>';
-		$text     .= "\n\n" . __( 'See their picks:', 'cheri-gallery' ) . ' ' . $link;
+		if ( $names ) {
+			$text .= "\n\n" . __( 'File names:', 'cheri-gallery' ) . "\n" . implode( ', ', $names );
+		}
 
 		$html = cg_render(
 			'email-layout.php',
 			array(
 				'settings' => CG_Settings::all(),
-				'content'  => $html_body,
+				'content'  => $h,
 			)
 		);
-		self::send( CG_Settings::get( 'notify_email' ), $subject, $html, $text );
+		self::send( CG_Settings::get( 'notify_email' ), $subject, $html, $text, $thumbs );
+
+		foreach ( $thumbs as $t ) {
+			@unlink( $t['path'] ); // phpcs:ignore
+		}
 	}
 }
