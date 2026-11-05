@@ -2,6 +2,11 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.11.0
+
+- Photo order for each gallery, in the Photos box: Name A–Z (the new default; a smart sort, so CP1, CP2 … CP10), Name Z–A, Upload order, or Upload order newest first. It applies to the gallery, slideshow, embeds and downloads.
+- ⤒ Move to top: pin any photo (or several at once with Move to top / Unpin) so it shows first in its set. Clients just see it first; nothing else changes.
+
 ## 0.10.4
 
 - Photos box: "Delete all photos in this set" deletes every photo in the set you're viewing. It shows how many and asks you to type DELETE first, then deletes in batches with a progress count. The set itself stays, and "Remove set" still removes it.

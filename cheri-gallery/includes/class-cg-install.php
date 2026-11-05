@@ -59,6 +59,7 @@ class CG_Install {
 				filesize bigint(20) unsigned NOT NULL DEFAULT 0,
 				hidden tinyint(1) NOT NULL DEFAULT 0,
 				no_download tinyint(1) NOT NULL DEFAULT 0,
+				pinned tinyint(1) NOT NULL DEFAULT 0,
 				sort_order int(11) NOT NULL DEFAULT 0,
 				created_at datetime NOT NULL,
 				PRIMARY KEY  (id),

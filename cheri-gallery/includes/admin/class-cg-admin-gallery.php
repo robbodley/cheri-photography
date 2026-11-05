@@ -382,6 +382,16 @@ class CG_Admin_Gallery {
 				</span>
 			</nav>
 
+			<div class="cg-pm__order">
+				<label for="cg-photo-order"><?php esc_html_e( 'Order', 'cheri-gallery' ); ?></label>
+				<select id="cg-photo-order" class="ch-select" data-cg-order>
+					<?php foreach ( CG_Photos::orders() as $key => $label ) : ?>
+						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $s['photo_order'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<span class="cg-hint"><?php esc_html_e( 'Photos marked ⤒ Top always come first. Applies to the gallery, slideshow, embeds and downloads.', 'cheri-gallery' ); ?></span>
+			</div>
+
 			<label class="ch-drop" data-cg-drop>
 				<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden data-cg-file>
 				<?php
@@ -401,6 +411,8 @@ class CG_Admin_Gallery {
 				<button type="button" class="button" data-cg-bulk-op="show"><?php esc_html_e( 'Unhide', 'cheri-gallery' ); ?></button>
 				<button type="button" class="button" data-cg-bulk-op="block"><?php esc_html_e( 'Block download', 'cheri-gallery' ); ?></button>
 				<button type="button" class="button" data-cg-bulk-op="allow"><?php esc_html_e( 'Allow download', 'cheri-gallery' ); ?></button>
+				<button type="button" class="button" data-cg-bulk-op="pin"><?php esc_html_e( 'Move to top', 'cheri-gallery' ); ?></button>
+				<button type="button" class="button" data-cg-bulk-op="unpin"><?php esc_html_e( 'Unpin', 'cheri-gallery' ); ?></button>
 				<select data-cg-bulk-move>
 					<option value=""><?php esc_html_e( 'Move to set…', 'cheri-gallery' ); ?></option>
 					<?php foreach ( $s['sets'] as $set ) : ?>
@@ -443,12 +455,16 @@ class CG_Admin_Gallery {
 				<?php if ( $p->no_download ) : ?>
 					<span class="ch-badge ch-badge--private"><?php echo cg_icon( 'nodl' ); // phpcs:ignore ?> <?php esc_html_e( 'No download', 'cheri-gallery' ); ?></span>
 				<?php endif; ?>
+				<?php if ( ! empty( $p->pinned ) ) : ?>
+					<span class="ch-badge ch-badge--password">⤒ <?php esc_html_e( 'Top', 'cheri-gallery' ); ?></span>
+				<?php endif; ?>
 			</span>
 			<div class="ch-pm__bar">
 				<span class="cg-pm__name" title="<?php echo esc_attr( $p->original_name ); ?>"><?php echo esc_html( $p->original_name ); ?></span>
 				<span class="cg-pm__btns">
 					<button type="button" class="ch-iconbtn" data-cg-op="cover" title="<?php esc_attr_e( 'Use as cover', 'cheri-gallery' ); ?>" aria-label="<?php esc_attr_e( 'Use as cover', 'cheri-gallery' ); ?>">★</button>
 					<button type="button" class="ch-iconbtn" data-cg-op="hidden" aria-pressed="<?php echo $p->hidden ? 'true' : 'false'; ?>" title="<?php esc_attr_e( 'Hide from client', 'cheri-gallery' ); ?>" aria-label="<?php esc_attr_e( 'Hide from client', 'cheri-gallery' ); ?>"><?php echo cg_icon( 'eyeoff' ); // phpcs:ignore ?></button>
+					<button type="button" class="ch-iconbtn" data-cg-op="pinned" aria-pressed="<?php echo ! empty( $p->pinned ) ? 'true' : 'false'; ?>" title="<?php esc_attr_e( 'Move to the top', 'cheri-gallery' ); ?>" aria-label="<?php esc_attr_e( 'Move to the top', 'cheri-gallery' ); ?>">⤒</button>
 					<button type="button" class="ch-iconbtn" data-cg-op="no_download" aria-pressed="<?php echo $p->no_download ? 'true' : 'false'; ?>" title="<?php esc_attr_e( 'Block download of this photo', 'cheri-gallery' ); ?>" aria-label="<?php esc_attr_e( 'Block download of this photo', 'cheri-gallery' ); ?>"><?php echo cg_icon( 'nodl' ); // phpcs:ignore ?></button>
 				</span>
 			</div>
@@ -561,7 +577,7 @@ class CG_Admin_Gallery {
 
 			case 'set_flag':
 				$field = isset( $_POST['field'] ) ? sanitize_key( $_POST['field'] ) : '';
-				if ( ! in_array( $field, array( 'hidden', 'no_download' ), true ) ) {
+				if ( ! in_array( $field, array( 'hidden', 'no_download', 'pinned' ), true ) ) {
 					cg_json_fail( 'Bad field' );
 				}
 				CG_Photos::update( $gid, $ids, array( $field => ! empty( $_POST['value'] ) ) );
@@ -577,6 +593,15 @@ class CG_Admin_Gallery {
 
 			case 'delete':
 				CG_Photos::delete( $gid, $ids );
+				break;
+
+			case 'order':
+				$order = isset( $_POST['order'] ) ? sanitize_key( $_POST['order'] ) : '';
+				CG_Galleries::save( $gid, array( 'photo_order' => $order ) );
+				CG_Delivery::clear_zip_cache( $gid );
+				break;
+
+			case 'refresh':
 				break;
 
 			case 'cover':
@@ -620,6 +645,11 @@ class CG_Admin_Gallery {
 				$tiles[ $p->id ] = self::tile( $p, $cover, $fresh['sets'] );
 			}
 		}
-		cg_json_ok( array( 'tiles' => $tiles ) );
+		cg_json_ok(
+			array(
+				'tiles' => $tiles,
+				'order' => array_map( 'intval', wp_list_pluck( CG_Photos::for_gallery( $gid ), 'id' ) ),
+			)
+		);
 	}
 }

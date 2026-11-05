@@ -110,7 +110,15 @@
 		return t.content.firstElementChild;
 	}
 
-	function replaceTiles(tiles) {
+	// Put the tiles in the order the server says (after a pin, an order change or uploads).
+	function applyOrder(order) {
+		(order || []).forEach(function (id) {
+			var t = $('[data-cg-tile="' + id + '"]', grid);
+			if (t) { grid.appendChild(t); }
+		});
+	}
+
+	function replaceTiles(tiles, order) {
 		Object.keys(tiles || {}).forEach(function (id) {
 			var old = $('[data-cg-tile="' + id + '"]', grid);
 			var fresh = fromHTML(tiles[id]);
@@ -120,6 +128,7 @@
 				$('[data-cg-select]', fresh).checked = wasChecked;
 			}
 		});
+		applyOrder(order);
 		applySetFilter();
 		updateBulk();
 	}
@@ -202,6 +211,17 @@
 		nextBatch();
 	});
 
+	/* Photo order */
+	var orderSelect = $('[data-cg-order]', pm);
+	if (orderSelect) {
+		orderSelect.addEventListener('change', function () {
+			orderSelect.disabled = true;
+			post({ op: 'order', order: orderSelect.value }).then(function (d) { applyOrder(d.order); applySetFilter(); })
+				.catch(function (err) { window.alert(err.message); })
+				.then(function () { orderSelect.disabled = false; });
+		});
+	}
+
 	/* ---------------- Upload ---------------- */
 	function uploadFiles(files) {
 		files = Array.prototype.slice.call(files).filter(function (f) { return /^image\/(jpeg|png|webp)$/.test(f.type); });
@@ -215,6 +235,7 @@
 				uploading = false;
 				status.textContent = failed.length ? fmt(T.failed, failed.length) + ' ' + failed.join('; ') : T.done;
 				applySetFilter();
+				post({ op: 'refresh' }).then(function (d) { applyOrder(d.order); }).catch(function () {});
 				return;
 			}
 			var f = files[i++];
@@ -259,11 +280,11 @@
 			req = post({ op: 'cover', ids: [id] }).then(function (d) {
 				var input = $('[data-cg-cover-input]', pm);
 				if (input) { input.value = id; }
-				replaceTiles(d.tiles);
+				replaceTiles(d.tiles, d.order);
 			});
 		} else {
 			var on = btn.getAttribute('aria-pressed') !== 'true';
-			req = post({ op: 'set_flag', field: op, value: on ? 1 : 0, ids: [id] }).then(function (d) { replaceTiles(d.tiles); });
+			req = post({ op: 'set_flag', field: op, value: on ? 1 : 0, ids: [id] }).then(function (d) { replaceTiles(d.tiles, d.order); });
 		}
 		req.catch(function (err) { window.alert(err.message); btn.disabled = false; });
 	});
@@ -299,15 +320,15 @@
 				updateBulk();
 			});
 		} else {
-			var map = { hide: ['hidden', 1], show: ['hidden', 0], block: ['no_download', 1], allow: ['no_download', 0] };
-			req = post({ op: 'set_flag', field: map[op][0], value: map[op][1], ids: ids }).then(function (d) { replaceTiles(d.tiles); });
+			var map = { hide: ['hidden', 1], show: ['hidden', 0], block: ['no_download', 1], allow: ['no_download', 0], pin: ['pinned', 1], unpin: ['pinned', 0] };
+			req = post({ op: 'set_flag', field: map[op][0], value: map[op][1], ids: ids }).then(function (d) { replaceTiles(d.tiles, d.order); });
 		}
 		req.catch(function (err) { window.alert(err.message); });
 	});
 	$('[data-cg-bulk-move]', bulk).addEventListener('change', function (e) {
 		var set = e.target.value;
 		if (!set) { return; }
-		post({ op: 'move', set: set, ids: selectedIds() }).then(function (d) { replaceTiles(d.tiles); e.target.value = ''; })
+		post({ op: 'move', set: set, ids: selectedIds() }).then(function (d) { replaceTiles(d.tiles, d.order); e.target.value = ''; })
 			.catch(function (err) { window.alert(err.message); });
 	});
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Cheri Gallery
  * Description:       Client galleries for Cheri Photography: public, password and private albums, watermarks, downloads, client accounts with favourites lists, and branded share emails.
- * Version:           0.10.4
+ * Version:           0.11.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Cheri Photography
@@ -12,8 +12,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'CG_VERSION', '0.10.4' );
-define( 'CG_DB_VERSION', 1 );
+define( 'CG_VERSION', '0.11.0' );
+define( 'CG_DB_VERSION', 2 );
 define( 'CG_FILE', __FILE__ );
 define( 'CG_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CG_URL', plugin_dir_url( __FILE__ ) );

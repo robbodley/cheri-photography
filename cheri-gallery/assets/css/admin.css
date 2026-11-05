@@ -116,3 +116,7 @@
 .cg-chip__promote { border: 1px solid var(--ch-tan-strong); background: var(--ch-surface); color: var(--ch-tan-strong); font: 600 10px/14px var(--ch-font-sans); letter-spacing: .1em; text-transform: uppercase; padding: 4px 6px; cursor: pointer; }
 .cg-chip__promote:hover { background: var(--ch-tan-strong); color: var(--ch-on-tan); }
 .cg-danger-link { color: var(--ch-danger) !important; }
+
+.cg-pm__order { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ch-space-2); margin: 0 0 var(--ch-space-3); }
+.cg-pm__order label { font: 600 11px/16px var(--ch-font-sans); letter-spacing: .18em; text-transform: uppercase; color: var(--ch-ink-muted); }
+.cg-pm__order .cg-hint { margin: 0; }

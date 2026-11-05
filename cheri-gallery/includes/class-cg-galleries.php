@@ -87,6 +87,7 @@ class CG_Galleries {
 			'event_date'       => '',
 			'cover_photo'      => 0,
 			'cover_position'   => 'center',
+			'photo_order'      => 'name', // name | name_desc | upload | upload_desc
 			'visibility'       => 'password',
 			'password'         => '',
 			'private_key'      => '',
@@ -149,6 +150,9 @@ class CG_Galleries {
 		}
 		if ( isset( $input['featured'] ) ) {
 			$s['featured'] = min( 6, absint( $input['featured'] ) );
+		}
+		if ( isset( $input['photo_order'] ) && array_key_exists( $input['photo_order'], CG_Photos::orders() ) ) {
+			$s['photo_order'] = $input['photo_order'];
 		}
 		if ( isset( $input['cover_position'] ) && in_array( $input['cover_position'], array( 'top', 'center', 'bottom' ), true ) ) {
 			$s['cover_position'] = $input['cover_position'];

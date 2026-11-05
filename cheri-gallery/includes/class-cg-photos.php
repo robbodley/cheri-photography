@@ -38,8 +38,51 @@ class CG_Photos {
 		if ( null !== $args['set'] ) {
 			$where .= $wpdb->prepare( ' AND set_name = %s', $args['set'] );
 		}
-		$limit = $args['limit'] ? $wpdb->prepare( ' LIMIT %d', $args['limit'] ) : '';
-		return $wpdb->get_results( 'SELECT * FROM ' . self::table() . " WHERE $where ORDER BY sort_order ASC, id ASC$limit" ); // phpcs:ignore
+		$rows = $wpdb->get_results( 'SELECT * FROM ' . self::table() . " WHERE $where ORDER BY sort_order ASC, id ASC" ); // phpcs:ignore
+		$rows = self::sort( (array) $rows, (string) CG_Galleries::setting( $gallery_id, 'photo_order' ) );
+		return $args['limit'] ? array_slice( $rows, 0, (int) $args['limit'] ) : $rows;
+	}
+
+	/**
+	 * Photo order choices for a gallery.
+	 */
+	public static function orders() {
+		return array(
+			'name'        => __( 'Name, A–Z (CP1, CP2 … CP10)', 'cheri-gallery' ),
+			'name_desc'   => __( 'Name, Z–A', 'cheri-gallery' ),
+			'upload'      => __( 'Upload order (first uploaded first)', 'cheri-gallery' ),
+			'upload_desc' => __( 'Upload order (newest first)', 'cheri-gallery' ),
+		);
+	}
+
+	/**
+	 * Sort photos: pinned ("Top") photos first, then by the gallery's order. Name order is
+	 * "natural", so CP2 comes before CP10.
+	 */
+	public static function sort( array $rows, $order ) {
+		$order = array_key_exists( $order, self::orders() ) ? $order : 'name';
+		$desc  = '_desc' === substr( $order, -5 );
+		$by    = $desc ? substr( $order, 0, -5 ) : $order;
+		usort(
+			$rows,
+			function ( $a, $b ) use ( $by, $desc ) {
+				$pa = ! empty( $a->pinned );
+				$pb = ! empty( $b->pinned );
+				if ( $pa !== $pb ) {
+					return $pa ? -1 : 1;
+				}
+				if ( 'name' === $by ) {
+					$cmp = strnatcasecmp( (string) $a->original_name, (string) $b->original_name );
+				} else {
+					$cmp = (int) $a->sort_order - (int) $b->sort_order;
+				}
+				if ( 0 === $cmp ) {
+					$cmp = (int) $a->id - (int) $b->id;
+				}
+				return $desc ? -$cmp : $cmp;
+			}
+		);
+		return $rows;
 	}
 
 	public static function count( $gallery_id, $include_hidden = false ) {
@@ -163,6 +206,9 @@ class CG_Photos {
 		}
 		if ( array_key_exists( 'no_download', $fields ) ) {
 			$data['no_download'] = $fields['no_download'] ? 1 : 0;
+		}
+		if ( array_key_exists( 'pinned', $fields ) ) {
+			$data['pinned'] = $fields['pinned'] ? 1 : 0;
 		}
 		if ( array_key_exists( 'set_name', $fields ) ) {
 			$data['set_name'] = mb_substr( sanitize_text_field( $fields['set_name'] ), 0, 100 );
