@@ -169,6 +169,39 @@
 		saveSets(sets.filter(function (s) { return s !== currentSet; }));
 	});
 
+	/* Delete every photo in the current set (asks for DELETE first; works in batches). */
+	$('[data-cg-set-empty]', pm).addEventListener('click', function () {
+		var tiles = $$('[data-cg-tile]', grid).filter(function (t) { return t.getAttribute('data-set') === currentSet; });
+		if (!tiles.length) { window.alert(T.emptyNone); return; }
+		var answer = window.prompt(fmt(T.emptySet, tiles.length, currentSet), '');
+		if (!answer || answer.trim().toUpperCase() !== 'DELETE') { return; }
+		var ids = tiles.map(function (t) { return t.getAttribute('data-cg-tile'); });
+		var total = ids.length, done = 0;
+		uploading = true; // warn before leaving the page mid-way
+		function nextBatch() {
+			if (!ids.length) {
+				uploading = false;
+				status.textContent = fmt(T.deleted, done);
+				applySetFilter();
+				updateBulk();
+				return;
+			}
+			var batch = ids.splice(0, 25);
+			status.textContent = fmt(T.deleting, done, total);
+			post({ op: 'delete', ids: batch }).then(function () {
+				batch.forEach(function (id) { var t = $('[data-cg-tile="' + id + '"]', grid); if (t) { t.remove(); } });
+				done += batch.length;
+				nextBatch();
+			}).catch(function (err) {
+				uploading = false;
+				status.textContent = fmt(T.deleted, done);
+				window.alert(err.message);
+				applySetFilter();
+			});
+		}
+		nextBatch();
+	});
+
 	/* ---------------- Upload ---------------- */
 	function uploadFiles(files) {
 		files = Array.prototype.slice.call(files).filter(function (f) { return /^image\/(jpeg|png|webp)$/.test(f.type); });

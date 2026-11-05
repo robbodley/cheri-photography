@@ -48,6 +48,13 @@ class CG_Admin_Gallery {
 					'copied'      => __( 'Copied', 'cheri-gallery' ),
 					'leaveUpload' => __( 'Photos are still uploading. Leave anyway?', 'cheri-gallery' ),
 					'remove'      => __( 'Remove', 'cheri-gallery' ),
+					/* translators: 1: number of photos, 2: set name */
+					'emptySet'    => __( 'Delete all %1$d photos in "%2$s"? They\'re removed from the gallery, from clients\' favourites and from your server, and this can\'t be undone.\n\nType DELETE to confirm.', 'cheri-gallery' ),
+					'emptyNone'   => __( 'There are no photos in this set.', 'cheri-gallery' ),
+					/* translators: 1: done, 2: total */
+					'deleting'    => __( 'Deleting %1$d of %2$d…', 'cheri-gallery' ),
+					/* translators: %d: number of photos */
+					'deleted'     => __( '%d photos deleted.', 'cheri-gallery' ),
 				),
 			)
 		);
@@ -371,6 +378,7 @@ class CG_Admin_Gallery {
 				<span class="cg-pm__setlinks">
 					<button type="button" class="ch-textlink" data-cg-set-rename><?php esc_html_e( 'Rename set', 'cheri-gallery' ); ?></button>
 					<button type="button" class="ch-textlink" data-cg-set-delete><?php esc_html_e( 'Remove set', 'cheri-gallery' ); ?></button>
+					<button type="button" class="ch-textlink cg-danger-link" data-cg-set-empty><?php esc_html_e( 'Delete all photos in this set', 'cheri-gallery' ); ?></button>
 				</span>
 			</nav>
 

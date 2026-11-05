@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.10.4
+
+- Photos box: "Delete all photos in this set" deletes every photo in the set you're viewing. It shows how many and asks you to type DELETE first, then deletes in batches with a progress count. The set itself stays, and "Remove set" still removes it.
+
 ## 0.10.3
 
 - When a client sends you their favourites, the email now shows their picks: small thumbnails (three across) with each file name, every file name in one line ready for Lightroom's search, and their note. The thumbnails are carried inside the email (up to 60 photos; every file name is always listed). The link to WordPress is gone.
