@@ -99,7 +99,7 @@ if ( 'confirm' === $cg_notice || 'link' === $cg_notice ) :
 			<?php if ( count( $sets ) > 1 ) : ?>
 				<h2 class="ch-set__title"><?php echo esc_html( $sets[ $i ] ); ?></h2>
 			<?php endif; ?>
-			<div class="ch-grid">
+			<div class="ch-grid"<?php echo CG_Galleries::setting( $gid, 'even_bottom' ) ? '' : ' data-cg-even-off'; ?>>
 				<?php
 				foreach ( $photos as $p ) :
 					$can_dl = CG_Access::can_download( $gid, $p );

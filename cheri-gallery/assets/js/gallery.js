@@ -130,6 +130,7 @@
 		});
 		var cols = $$(':scope > .ch-grid__col', g);
 		var w = cols.length ? cols[0].clientWidth : 0;
+		if (g.hasAttribute('data-cg-even-off')) { return; } // switched off for this gallery
 		if (cols.length < 2 || !w) { return; } // one column, or not on screen (hidden set)
 		var gap = parseFloat(window.getComputedStyle(g).columnGap) || 0;
 		var data = cols.map(function (col) {

@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.11.4
+
+- New "Line up the bottom edge" switch for each gallery, in Settings → Layout (on by default). Turn it off and every photo shows uncropped, with the columns ending unevenly as before. It applies to that gallery's page and its embeds.
+
 ## 0.11.3
 
 - The bottom of the photo grid now lines up straight, like the top. The last few photos in each column are made a little taller or shorter (usually 10–20%) and trimmed to fit, keeping more of the top of the photo. Every other photo is unchanged, and the enlarged view always shows the whole photo. Sets with fewer than two rows are left as they are.

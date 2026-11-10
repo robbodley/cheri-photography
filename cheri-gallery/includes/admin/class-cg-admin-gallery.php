@@ -313,6 +313,11 @@ class CG_Admin_Gallery {
 			</div>
 
 			<div class="ch-set__group">
+				<p class="ch-set__h"><?php esc_html_e( 'Layout', 'cheri-gallery' ); ?></p>
+				<?php CG_Admin::toggle( 'cg[even_bottom]', $s['even_bottom'], __( 'Line up the bottom edge', 'cheri-gallery' ), __( 'The last few photos in each column are trimmed slightly so the columns end level. Off: every photo shows uncropped and the columns end unevenly.', 'cheri-gallery' ) ); ?>
+			</div>
+
+			<div class="ch-set__group">
 				<p class="ch-set__h"><?php esc_html_e( 'Downloads', 'cheri-gallery' ); ?></p>
 				<?php CG_Admin::toggle( 'cg[album_download]', $s['album_download'], __( 'Download whole album', 'cheri-gallery' ), __( 'One zip of every photo', 'cheri-gallery' ) ); ?>
 				<?php CG_Admin::toggle( 'cg[photo_download]', $s['photo_download'], __( 'Download single photos', 'cheri-gallery' ), __( 'A download button on each photo. Block individual photos in Photos.', 'cheri-gallery' ) ); ?>

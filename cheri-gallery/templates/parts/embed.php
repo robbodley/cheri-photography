@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 	<?php if ( $show_title ) : ?>
 		<h2 class="ch-embed__title"><?php echo esc_html( get_the_title( $gallery_id ) ); ?></h2>
 	<?php endif; ?>
-	<div class="ch-grid ch-grid--embed" style="--cg-cols: <?php echo esc_attr( $columns ); ?>; --cg-gap: <?php echo esc_attr( $gap ); ?>px">
+	<div class="ch-grid ch-grid--embed"<?php echo CG_Galleries::setting( $gallery_id, 'even_bottom' ) ? '' : ' data-cg-even-off'; ?> style="--cg-cols: <?php echo esc_attr( $columns ); ?>; --cg-gap: <?php echo esc_attr( $gap ); ?>px">
 		<?php foreach ( $photos as $p ) : ?>
 			<figure class="ch-grid__item" data-cg-photo="<?php echo esc_attr( $p->id ); ?>" data-web="<?php echo esc_url( CG_Delivery::photo_url( $p, 'web' ) ); ?>" data-dl="" data-name="">
 				<a href="<?php echo esc_url( CG_Delivery::photo_url( $p, 'web' ) ); ?>" class="ch-grid__open" aria-label="<?php esc_attr_e( 'Open photo', 'cheri-gallery' ); ?>">
