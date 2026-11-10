@@ -60,6 +60,7 @@
 	function showSet(i, scroll) {
 		tabs.forEach(function (t) { t.setAttribute('aria-current', t.getAttribute('data-cg-set') === String(i) ? 'true' : 'false'); });
 		panels.forEach(function (p) { p.hidden = p.getAttribute('data-cg-set-panel') !== String(i); });
+		if (grids) { grids.forEach(evenGrid); }
 		if (scroll) {
 			var head = $('#cg-photos');
 			if (head) { window.scrollTo({ top: head.getBoundingClientRect().top + window.pageYOffset, behavior: 'smooth' }); }
@@ -116,7 +117,44 @@
 		cols.forEach(function (col) { g.appendChild(col); });
 		g.classList.add('is-cols');
 	}
-	function layoutGrids(force) { grids.forEach(function (g) { layoutGrid(g, force); }); }
+	// Line up the bottom edge: the last few photos in each column get a little taller or
+	// shorter (trimmed to fill, like the cover) so every column ends at the same height.
+	// Only those photos change; the enlarged view always shows the whole photo.
+	var EVEN_LAST = 4; // how many photos at the foot of each column share the adjustment
+	function evenGrid(g) {
+		$$('img[data-cg-even]', g).forEach(function (img) {
+			img.style.aspectRatio = '';
+			img.style.objectFit = '';
+			img.style.objectPosition = '';
+			img.removeAttribute('data-cg-even');
+		});
+		var cols = $$(':scope > .ch-grid__col', g);
+		var w = cols.length ? cols[0].clientWidth : 0;
+		if (cols.length < 2 || !w) { return; } // one column, or not on screen (hidden set)
+		var gap = parseFloat(window.getComputedStyle(g).columnGap) || 0;
+		var data = cols.map(function (col) {
+			var items = $$('.ch-grid__item', col).filter(function (f) { return !f.hidden; });
+			var h = items.reduce(function (t, f) { return t + w * ratio(f) + gap; }, 0);
+			return { items: items, h: h };
+		});
+		// Needs at least two rows everywhere, or a short gallery would be cropped heavily.
+		if (data.some(function (d) { return d.items.length < 2; })) { return; }
+		var target = data.reduce(function (t, d) { return t + d.h; }, 0) / data.length;
+		data.forEach(function (d) {
+			var last = d.items.slice(-EVEN_LAST);
+			var lastH = last.reduce(function (t, f) { return t + w * ratio(f); }, 0);
+			var scale = (lastH + target - d.h) / lastH;
+			last.forEach(function (f) {
+				var img = f.querySelector('img');
+				if (!img) { return; }
+				img.style.aspectRatio = (1 / (ratio(f) * scale)).toFixed(4);
+				img.style.objectFit = 'cover';
+				img.style.objectPosition = '50% 30%'; // trim more from the bottom than the top, to keep faces
+				img.setAttribute('data-cg-even', scale.toFixed(3));
+			});
+		});
+	}
+	function layoutGrids(force) { grids.forEach(function (g) { layoutGrid(g, force); evenGrid(g); }); }
 	layoutGrids(true);
 	var resizeTimer;
 	window.addEventListener('resize', function () {

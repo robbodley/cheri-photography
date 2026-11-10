@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.11.3
+
+- The bottom of the photo grid now lines up straight, like the top. The last few photos in each column are made a little taller or shorter (usually 10–20%) and trimmed to fit, keeping more of the top of the photo. Every other photo is unchanged, and the enlarged view always shows the whole photo. Sets with fewer than two rows are left as they are.
+
 ## 0.11.2
 
 - Photos in the gallery now read left to right: 1, 2, 3, 4 across the top, then each next photo fills the shortest column. Before, they ran down the first column, then the second. The look (staggered photos, gaps, 4/3/2 columns) is the same, and it applies to embedded galleries too.
