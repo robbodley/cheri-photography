@@ -122,3 +122,23 @@
 .cg-pm__order .cg-hint { margin: 0; }
 .cg-pm__statusrow { display: flex; align-items: center; gap: var(--ch-space-3); flex-wrap: wrap; margin: 0 0 var(--ch-space-2); }
 .cg-pm__statusrow .cg-pm__status { margin: 0; }
+
+/* Settings → Session types */
+.cg-types { width: 100%; margin: var(--ch-space-2) 0; table-layout: fixed; }
+.cg-types th, .cg-types td { padding-left: 6px !important; padding-right: 6px !important; }
+.cg-types th { font-size: 11px !important; letter-spacing: .1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cg-types th:nth-child(1) { width: 34%; }
+.cg-types th:nth-child(2) { width: 18%; }
+.cg-types th:nth-child(3) { width: 15%; }
+.cg-types th:nth-child(4) { width: 9%; text-align: center; }
+.cg-types th:nth-child(5) { width: 24%; }
+.cg-types__key code { overflow: hidden; text-overflow: ellipsis; display: block; }
+.cg-types td { vertical-align: middle; padding-top: 4px; padding-bottom: 4px; }
+.cg-types .ch-field__input { width: 100%; }
+.cg-types__key code { font-size: 12px; }
+.cg-types__used { text-align: center; }
+.cg-types__btns { white-space: nowrap; }
+.cg-types__btns .cg-hint { margin-left: 6px; }
+.cg-types__remove { margin-left: 6px; font-size: 13px; color: var(--ch-danger); cursor: pointer; }
+.cg-types__remove input { margin: 0 2px 0 0 !important; }
+@media (max-width: 782px) { .cg-types thead { display: none; } .cg-types tr { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 8px 0; border-bottom: 1px solid var(--ch-line); } .cg-types td { border: 0; } .cg-types__used { text-align: left; } }

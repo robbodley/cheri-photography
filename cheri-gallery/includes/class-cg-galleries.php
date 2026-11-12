@@ -83,7 +83,7 @@ class CG_Galleries {
 		return array(
 			'clients'          => array(),
 			'guests'           => array(), // Signed themselves up with the gallery password.
-			'session_type'     => 'wedding',
+			'session_type'     => array_key_exists( 'wedding', cg_session_types() ) ? 'wedding' : (string) key( cg_session_types() ),
 			'event_date'       => '',
 			'cover_photo'      => 0,
 			'cover_position'   => 'center',

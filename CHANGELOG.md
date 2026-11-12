@@ -2,6 +2,13 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.12.0
+
+- Session types can now be edited, in Cheri Gallery → Settings → Session types. Rename them, change the short label shown on gallery cards, reorder them with ↑ ↓ (the gallery's Session type box follows this order), add new ones, and remove ones you don't use.
+- A type used by any gallery can be renamed but not removed, so no gallery is left without one. The list shows how many galleries use each type.
+- Each type shows its shortcode value for `[cheri_galleries type="…"]`. It's made from the name when you add the type and never changes, so renaming won't break your pages.
+- The gallery's Session type box has an "Add or edit session types" link.
+
 ## 0.11.4
 
 - New "Line up the bottom edge" switch for each gallery, in Settings → Layout (on by default). Turn it off and every photo shows uncropped, with the columns ending unevenly as before. It applies to that gallery's page and its embeds.

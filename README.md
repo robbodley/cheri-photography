@@ -83,7 +83,7 @@ A grid of cards (cover photo, session type, name, date and number of photos) lin
 | Option | What it does | Default | Example |
 |---|---|---|---|
 | `featured` | `yes` shows only your featured galleries (Settings → Who can see it → **Featured on the home page**, positions 1–6), in that order, instead of the "Show on the galleries page" ones | `no` | `featured="yes"` |
-| `type` | Only one session type: `wedding`, `portrait`, `newborn` or `corporate` | all types | `type="portrait"` |
+| `type` | Only one session type, by its shortcode value (listed in Settings → Session types, e.g. `wedding`, `portrait`, `newborn`, `corporate`) | all types | `type="portrait"` |
 | `limit` | Most cards to show | `24` (`6` when featured) | `limit="3"` |
 | `columns` | Cards per row on a computer, from 1 to 6 (tablets show at most 2, phones 1) | fit to width (`3` when featured) | `columns="3"` |
 

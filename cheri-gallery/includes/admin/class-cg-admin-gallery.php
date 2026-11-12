@@ -240,6 +240,7 @@ class CG_Admin_Gallery {
 					<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $s['session_type'], $key ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
 			</select>
+			<p class="cg-hint"><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-settings#session-types' ) ); ?>"><?php esc_html_e( 'Add or edit session types', 'cheri-gallery' ); ?></a></p>
 
 			<label class="cg-label" for="cg-date"><?php esc_html_e( 'Shoot date', 'cheri-gallery' ); ?></label>
 			<input id="cg-date" type="date" name="cg[event_date]" value="<?php echo esc_attr( $s['event_date'] ); ?>" class="ch-select">

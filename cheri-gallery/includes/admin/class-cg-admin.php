@@ -88,6 +88,7 @@ class CG_Admin {
 			'link_sent'      => array( 'success', __( 'Sign-in link sent.', 'cheri-gallery' ) ),
 			'link_failed'    => array( 'error', __( 'The email could not be sent. Check your email sender (WP Mail SMTP) is set up.', 'cheri-gallery' ) ),
 			'settings_saved' => array( 'success', __( 'Settings saved.', 'cheri-gallery' ) ),
+			'types_in_use'   => array( 'warning', __( 'Settings saved. A session type still used by a gallery was kept: change those galleries to another type first, then remove it.', 'cheri-gallery' ) ),
 			'email_sent'     => array( 'success', __( 'Gallery email sent.', 'cheri-gallery' ) ),
 			'gallery_linked'   => array( 'success', __( 'Added to the gallery.', 'cheri-gallery' ) ),
 			'gallery_unlinked' => array( 'success', __( 'Removed from the gallery.', 'cheri-gallery' ) ),

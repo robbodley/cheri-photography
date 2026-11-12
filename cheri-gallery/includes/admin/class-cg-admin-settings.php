@@ -103,6 +103,8 @@ class CG_Admin_Settings {
 							</label>
 						</div>
 
+						<?php self::session_types_group(); ?>
+
 						<div class="ch-set__group">
 							<p class="ch-set__h"><?php esc_html_e( 'Pages', 'cheri-gallery' ); ?></p>
 							<?php CG_Admin::toggle( 'password_signin', $s['password_signin'], __( 'Clients sign in with their email and the gallery password', 'cheri-gallery' ), __( 'Clients you\'ve added to a gallery go straight in, with no email link. Anyone who has the forwarded email knows the password, so they could sign in as the client and download. Turn off to always use email links.', 'cheri-gallery' ) ); ?>
@@ -160,6 +162,125 @@ class CG_Admin_Settings {
 			<?php self::updates_panel(); ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * How many galleries (any status) use each session type.
+	 */
+	private static function session_type_counts() {
+		$counts = array();
+		$ids    = get_posts(
+			array(
+				'post_type'   => CG_Galleries::POST_TYPE,
+				'post_status' => 'any',
+				'numberposts' => -1,
+				'fields'      => 'ids',
+			)
+		);
+		foreach ( $ids as $id ) {
+			$t            = CG_Galleries::setting( $id, 'session_type' );
+			$counts[ $t ] = ( $counts[ $t ] ?? 0 ) + 1;
+		}
+		return $counts;
+	}
+
+	/**
+	 * Settings → Session types: rename, reorder, add and remove the types offered on a gallery.
+	 */
+	private static function session_types_group() {
+		$counts = self::session_type_counts();
+		$row    = function ( $i, $key, $t, $used ) {
+			?>
+			<tr data-cg-type-row>
+				<td><input class="ch-field__input" name="types[<?php echo esc_attr( $i ); ?>][name]" value="<?php echo esc_attr( $t['name'] ); ?>" placeholder="<?php esc_attr_e( 'e.g. Family & children', 'cheri-gallery' ); ?>" aria-label="<?php esc_attr_e( 'Name', 'cheri-gallery' ); ?>">
+					<input type="hidden" name="types[<?php echo esc_attr( $i ); ?>][key]" value="<?php echo esc_attr( $key ); ?>"></td>
+				<td><input class="ch-field__input" name="types[<?php echo esc_attr( $i ); ?>][short]" value="<?php echo esc_attr( $t['short'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'e.g. Family', 'cheri-gallery' ); ?>" aria-label="<?php esc_attr_e( 'Card label', 'cheri-gallery' ); ?>"></td>
+				<td class="cg-types__key"><?php echo $key ? '<code>' . esc_html( $key ) . '</code>' : '<span class="cg-hint">' . esc_html__( 'new', 'cheri-gallery' ) . '</span>'; ?></td>
+				<td class="cg-types__used"><?php echo esc_html( (string) $used ); ?></td>
+				<td class="cg-types__btns">
+					<button type="button" class="ch-iconbtn" data-cg-type-move="-1" aria-label="<?php esc_attr_e( 'Move up', 'cheri-gallery' ); ?>">↑</button>
+					<button type="button" class="ch-iconbtn" data-cg-type-move="1" aria-label="<?php esc_attr_e( 'Move down', 'cheri-gallery' ); ?>">↓</button>
+					<?php if ( $used ) : ?>
+						<span class="cg-hint" title="<?php esc_attr_e( 'Used by a gallery, so it can\'t be removed', 'cheri-gallery' ); ?>"><?php esc_html_e( 'In use', 'cheri-gallery' ); ?></span>
+					<?php else : ?>
+						<label class="cg-types__remove"><input type="checkbox" name="types[<?php echo esc_attr( $i ); ?>][remove]" value="1"> <?php esc_html_e( 'Remove', 'cheri-gallery' ); ?></label>
+					<?php endif; ?>
+				</td>
+			</tr>
+			<?php
+		};
+		?>
+		<div class="ch-set__group" id="session-types">
+			<p class="ch-set__h"><?php esc_html_e( 'Session types', 'cheri-gallery' ); ?></p>
+			<p class="cg-hint"><?php esc_html_e( 'The choices in a gallery\'s "Session type" box, in this order. The card label shows above the gallery name on gallery cards. A type used by a gallery can be renamed but not removed. The shortcode value is for [cheri_galleries type="…"] and never changes.', 'cheri-gallery' ); ?></p>
+			<table class="ch-table cg-types">
+				<thead><tr>
+					<th><?php esc_html_e( 'Name', 'cheri-gallery' ); ?></th>
+					<th><?php esc_html_e( 'Card label', 'cheri-gallery' ); ?></th>
+					<th><?php esc_html_e( 'Shortcode', 'cheri-gallery' ); ?></th>
+					<th title="<?php esc_attr_e( 'Galleries using it', 'cheri-gallery' ); ?>"><?php esc_html_e( 'Used', 'cheri-gallery' ); ?></th>
+					<th><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'cheri-gallery' ); ?></span></th>
+				</tr></thead>
+				<tbody data-cg-types>
+					<?php
+					$i = 0;
+					foreach ( cg_session_type_list() as $key => $t ) {
+						$row( $i++, $key, $t, $counts[ $key ] ?? 0 );
+					}
+					$row( $i, '', array( 'name' => '', 'short' => '' ), 0 );
+					?>
+				</tbody>
+			</table>
+			<p><button type="button" class="ch-btn ch-btn--sm ch-btn--outline" data-cg-type-add><?php esc_html_e( '+ Add another', 'cheri-gallery' ); ?></button>
+				<span class="cg-hint"><?php esc_html_e( 'Type a name in the empty row to add a type, then press Save.', 'cheri-gallery' ); ?></span></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * The session types from the form: keys kept, new ones get a key from their name,
+	 * types still used by a gallery are never removed. Returns array( types, kept_in_use ).
+	 */
+	private static function parse_session_types( $rows ) {
+		$before = cg_session_type_list();
+		$counts = self::session_type_counts();
+		$out    = array();
+		$kept   = false;
+		foreach ( (array) $rows as $r ) {
+			$key   = sanitize_key( $r['key'] ?? '' );
+			$name  = sanitize_text_field( $r['name'] ?? '' );
+			$short = sanitize_text_field( $r['short'] ?? '' );
+			if ( $key && ! isset( $before[ $key ] ) ) {
+				$key = ''; // Not one of ours: treat as new.
+			}
+			$used = $key && ! empty( $counts[ $key ] );
+			if ( ! empty( $r['remove'] ) || '' === $name ) {
+				if ( ! $used ) {
+					continue; // Removed, or an empty new row.
+				}
+				$kept = true;
+				if ( '' === $name ) {
+					$name = $before[ $key ]['name'];
+				}
+			}
+			if ( ! $key ) {
+				$base = sanitize_key( sanitize_title( $short ? $short : $name ) );
+				$base = $base ? substr( $base, 0, 30 ) : 'type';
+				$key  = $base;
+				for ( $n = 2; isset( $out[ $key ] ) || isset( $before[ $key ] ); $n++ ) {
+					$key = $base . '-' . $n; // Never reuse an existing key.
+				}
+			}
+			$out[ $key ] = array( 'name' => $name, 'short' => $short );
+		}
+		// A type used by a gallery that's missing from the form (shouldn't happen) stays.
+		foreach ( $counts as $key => $n ) {
+			if ( isset( $before[ $key ] ) && ! isset( $out[ $key ] ) ) {
+				$out[ $key ] = $before[ $key ];
+				$kept        = true;
+			}
+		}
+		return array( $out ? $out : $before, $kept );
 	}
 
 	/**
@@ -267,8 +388,12 @@ class CG_Admin_Settings {
 			'pages_header'      => ( $p['pages_header'] ?? '' ) === 'gallery' ? 'gallery' : 'theme',
 			'site_footer'       => ( $p['site_footer'] ?? '' ) === 'gallery' ? 'gallery' : 'theme',
 		);
+		$kept = false;
+		if ( isset( $p['types'] ) ) {
+			list( $values['session_types'], $kept ) = self::parse_session_types( $p['types'] );
+		}
 		CG_Settings::update( $values );
-		wp_safe_redirect( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-settings&cg_msg=settings_saved' ) );
+		wp_safe_redirect( admin_url( 'edit.php?post_type=' . CG_Galleries::POST_TYPE . '&page=cg-settings&cg_msg=' . ( $kept ? 'types_in_use' : 'settings_saved' ) ) . ( isset( $p['types'] ) ? '#session-types' : '' ) );
 		exit;
 	}
 

@@ -27,6 +27,20 @@ class CG_Settings {
 			'pages_header'      => 'theme',
 			'site_footer'       => 'theme',
 			'templates'         => self::default_templates(),
+			'session_types'     => self::default_session_types(),
+		);
+	}
+
+	/**
+	 * Session types: key => name (in the gallery's dropdown) and short (label on gallery cards).
+	 * The key never changes once made, because galleries and the [cheri_galleries type=""] shortcode use it.
+	 */
+	public static function default_session_types() {
+		return array(
+			'wedding'   => array( 'name' => __( 'Wedding & parties', 'cheri-gallery' ), 'short' => __( 'Wedding', 'cheri-gallery' ) ),
+			'portrait'  => array( 'name' => __( 'Portrait & fashion', 'cheri-gallery' ), 'short' => __( 'Portrait', 'cheri-gallery' ) ),
+			'newborn'   => array( 'name' => __( 'Newborn & baby', 'cheri-gallery' ), 'short' => __( 'Newborn', 'cheri-gallery' ) ),
+			'corporate' => array( 'name' => __( 'Corporate events', 'cheri-gallery' ), 'short' => __( 'Corporate', 'cheri-gallery' ) ),
 		);
 	}
 

@@ -91,25 +91,31 @@ function cg_icon( $name ) {
  * Session types offered for galleries.
  */
 function cg_session_types() {
-	return array(
-		'wedding'   => __( 'Wedding & parties', 'cheri-gallery' ),
-		'portrait'  => __( 'Portrait & fashion', 'cheri-gallery' ),
-		'newborn'   => __( 'Newborn & baby', 'cheri-gallery' ),
-		'corporate' => __( 'Corporate events', 'cheri-gallery' ),
-	);
+	$out = array();
+	foreach ( cg_session_type_list() as $key => $t ) {
+		$out[ $key ] = $t['name'];
+	}
+	return $out;
+}
+
+/**
+ * The stored session types (Settings → Session types), always at least one.
+ */
+function cg_session_type_list() {
+	$types = CG_Settings::get( 'session_types' );
+	$types = is_array( $types ) ? array_filter( $types, 'is_array' ) : array();
+	return $types ? $types : CG_Settings::default_session_types();
 }
 
 /**
  * Short label for a session type (used as the eyebrow on cards).
  */
 function cg_session_label( $type ) {
-	$short = array(
-		'wedding'   => __( 'Wedding', 'cheri-gallery' ),
-		'portrait'  => __( 'Portrait', 'cheri-gallery' ),
-		'newborn'   => __( 'Newborn', 'cheri-gallery' ),
-		'corporate' => __( 'Corporate', 'cheri-gallery' ),
-	);
-	return isset( $short[ $type ] ) ? $short[ $type ] : '';
+	$types = cg_session_type_list();
+	if ( ! isset( $types[ $type ] ) ) {
+		return '';
+	}
+	return '' !== (string) ( $types[ $type ]['short'] ?? '' ) ? $types[ $type ]['short'] : $types[ $type ]['name'];
 }
 
 /**
