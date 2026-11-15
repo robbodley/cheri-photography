@@ -18,6 +18,7 @@ $badge = array(
 	'private'  => array( 'eyeoff', __( 'Private', 'cheri-gallery' ), ' ch-badge--private' ),
 );
 ?>
+<div class="ch-albums-wrap">
 <div class="ch-albums<?php echo $columns ? ' ch-albums--fixed' : ''; ?>"<?php echo $columns ? ' style="--cg-cols: ' . esc_attr( $columns ) . '"' : ''; ?>>
 	<?php
 	foreach ( $galleries as $g ) :
@@ -45,4 +46,5 @@ $badge = array(
 			</div>
 		</a>
 	<?php endforeach; ?>
+</div>
 </div>

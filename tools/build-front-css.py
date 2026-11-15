@@ -49,7 +49,7 @@ def process(css):
         if j < 0:
             break
         head = css[i:j].strip()
-        if head.startswith('@media') or head.startswith('@supports'):
+        if head.startswith(('@media', '@supports', '@container')):
             depth, k = 1, j + 1
             while depth:
                 depth += {'{': 1, '}': -1}.get(css[k], 0)

@@ -202,9 +202,15 @@
 .cg-page .ch-grid--embed .ch-grid__item { display: block; break-inside: avoid; margin: 0 0 var(--cg-gap) !important; padding: 0 !important; }
 
 /* [cheri_galleries columns="3"] and featured galleries: a fixed number of cards per row */
-.ch-albums--fixed { grid-template-columns: repeat(var(--cg-cols, 3), minmax(0, 1fr)); }
-@media (max-width: 900px) { .ch-albums--fixed { grid-template-columns: repeat(min(var(--cg-cols, 3), 2), minmax(0, 1fr)); } }
-@media (max-width: 560px) { .ch-albums--fixed { grid-template-columns: minmax(0, 1fr); } }
+/* Gallery cards: at most 4 to a row (or the shortcode's columns), and rows with fewer cards,
+   such as the last one, are centred. Sized from the box they sit in, not the screen. */
+.ch-albums-wrap { container-type: inline-size; }
+.ch-albums { --cg-n: 4; --cg-agap: var(--ch-space-4); display: flex; flex-wrap: wrap; justify-content: center; gap: var(--cg-agap); }
+.ch-albums > .ch-album { flex: 0 0 calc((100% - (var(--cg-n) - 1) * var(--cg-agap)) / var(--cg-n)); min-width: 0; }
+.ch-albums--fixed { --cg-n: var(--cg-cols, 3); }
+@container (max-width: 1000px) { .ch-albums { --cg-n: 3; } .ch-albums--fixed { --cg-n: min(var(--cg-cols, 3), 3); } }
+@container (max-width: 720px) { .ch-albums, .ch-albums--fixed { --cg-n: min(var(--cg-cols, 2), 2); } }
+@container (max-width: 440px) { .ch-albums, .ch-albums--fixed { --cg-n: 1; } }
 
 /* Cheri logo on the cover: 25% larger, and a link back to the website */
 .cg-page .ch-cover__mark { width: 150px; display: block; line-height: 0; }

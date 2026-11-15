@@ -2,6 +2,11 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.12.1
+
+- Gallery cards (`[cheri_galleries]` and My galleries) show at most 4 to a row, and a row with fewer cards, such as the last one, is centred in the box.
+- The number per row now follows the width of the box the shortcode sits in, not the whole screen: 4 in a wide box, then 3, 2 and 1 as it narrows. `columns="…"` still sets your own number for wide boxes.
+
 ## 0.12.0
 
 - Session types can now be edited, in Cheri Gallery → Settings → Session types. Rename them, change the short label shown on gallery cards, reorder them with ↑ ↓ (the gallery's Session type box follows this order), add new ones, and remove ones you don't use.
