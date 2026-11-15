@@ -274,10 +274,22 @@ class CG_Galleries {
 				'order'          => 'DESC',
 			)
 		);
+		return self::newest_first( $posts );
+	}
+
+	/**
+	 * Sort galleries newest shoot date first. A gallery with no shoot date uses the day it
+	 * was created; ties keep the newest created first.
+	 */
+	public static function newest_first( array $posts ) {
+		$key = function ( $p ) {
+			$d = (string) self::setting( $p->ID, 'event_date' );
+			return ( $d ? $d : substr( (string) ( $p->post_date ?? '' ), 0, 10 ) ) . ' ' . ( $p->post_date ?? '' );
+		};
 		usort(
 			$posts,
-			function ( $a, $b ) {
-				return strcmp( (string) self::setting( $b->ID, 'event_date' ), (string) self::setting( $a->ID, 'event_date' ) );
+			function ( $a, $b ) use ( $key ) {
+				return strcmp( $key( $b ), $key( $a ) );
 			}
 		);
 		return $posts;

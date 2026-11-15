@@ -400,7 +400,9 @@ class CG_Frontend {
 			}
 			$cards[] = $post;
 		}
-		if ( $featured ) {
+		if ( ! $featured ) {
+			$cards = CG_Galleries::newest_first( $cards ); // Newest shoot date first.
+		} else {
 			usort(
 				$cards,
 				function ( $a, $b ) {

@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.12.2
+
+- `[cheri_galleries]` lists galleries newest shoot date first (it used to follow the day each gallery was created). A gallery with no shoot date uses the day it was created. Featured galleries keep the positions you picked, and My galleries was already newest first.
+
 ## 0.12.1
 
 - Gallery cards (`[cheri_galleries]` and My galleries) show at most 4 to a row, and a row with fewer cards, such as the last one, is centred in the box.
