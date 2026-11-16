@@ -85,7 +85,7 @@ A grid of cards (cover photo, session type, name, date and number of photos) lin
 | `featured` | `yes` shows only your featured galleries (Settings → Who can see it → **Featured on the home page**, positions 1–6), in that order, instead of the "Show on the galleries page" ones | `no` | `featured="yes"` |
 | `type` | Only one session type, by its shortcode value (listed in Settings → Session types, e.g. `wedding`, `portrait`, `newborn`, `corporate`) | all types | `type="portrait"` |
 | `limit` | Most cards to show | `24` (`6` when featured) | `limit="3"` |
-| `columns` | Cards per row in a wide box, from 1 to 6 (narrower boxes show at most 3, then 2, then 1). A row with fewer cards, such as the last, is centred | `4` (`3` when featured) | `columns="3"` |
+| `columns` | Cards per row on a computer, from 1 to 6 (tablets show at most 3, then 2; phones 1). A row with fewer cards, such as the last, is centred | `4` (`3` when featured) | `columns="3"` |
 
 For the home page: `[cheri_galleries featured="yes"]` shows up to 6 featured galleries, three to a row. Picking a position another gallery already has moves that gallery out of it.
 

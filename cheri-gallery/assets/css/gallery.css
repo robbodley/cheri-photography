@@ -203,14 +203,17 @@
 
 /* [cheri_galleries columns="3"] and featured galleries: a fixed number of cards per row */
 /* Gallery cards: at most 4 to a row (or the shortcode's columns), and rows with fewer cards,
-   such as the last one, are centred. Sized from the box they sit in, not the screen. */
-.ch-albums-wrap { container-type: inline-size; }
-.ch-albums { --cg-n: 4; --cg-agap: var(--ch-space-4); display: flex; flex-wrap: wrap; justify-content: center; gap: var(--cg-agap); }
+   such as the last one, are centred. Plain flexbox, media queries and a padding-sized photo:
+   no container queries or aspect-ratio, which some Safari versions (all iPhone browsers)
+   measure wrongly, letting the last card spill over whatever is below. */
+.ch-albums { --cg-n: 4; --cg-agap: var(--ch-space-4); display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: var(--cg-agap); height: auto; }
 .ch-albums > .ch-album { flex: 0 0 calc((100% - (var(--cg-n) - 1) * var(--cg-agap)) / var(--cg-n)); min-width: 0; }
 .ch-albums--fixed { --cg-n: var(--cg-cols, 3); }
-@container (max-width: 1000px) { .ch-albums { --cg-n: 3; } .ch-albums--fixed { --cg-n: min(var(--cg-cols, 3), 3); } }
-@container (max-width: 720px) { .ch-albums, .ch-albums--fixed { --cg-n: min(var(--cg-cols, 2), 2); } }
-@container (max-width: 440px) { .ch-albums, .ch-albums--fixed { --cg-n: 1; } }
+.ch-album__media { aspect-ratio: auto; height: 0; padding-top: 75%; }
+.ch-album__media img, .ch-album__media .ch-ph { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+@media (max-width: 1000px) { .ch-albums { --cg-n: 3; } .ch-albums--fixed { --cg-n: min(var(--cg-cols, 3), 3); } }
+@media (max-width: 720px) { .ch-albums, .ch-albums--fixed { --cg-n: min(var(--cg-cols, 2), 2); } }
+@media (max-width: 440px) { .ch-albums, .ch-albums--fixed { --cg-n: 1; } }
 
 /* Cheri logo on the cover: 25% larger, and a link back to the website */
 .cg-page .ch-cover__mark { width: 150px; display: block; line-height: 0; }

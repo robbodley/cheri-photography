@@ -2,6 +2,10 @@
 
 Each "## version" section becomes the release notes your site shows under Cheri Gallery → Settings → Updates.
 
+## 0.12.3
+
+- Fixes the last gallery card overlapping whatever is below the gallery list on phones (`[cheri_galleries]`, featured and My galleries). The cards now use layout methods every browser measures the same way, including Safari on iPhone. Still at most 4 to a row with short rows centred. The number per row goes by screen size again: 4, then 3, 2 and 1 on phones.
+
 ## 0.12.2
 
 - `[cheri_galleries]` lists galleries newest shoot date first (it used to follow the day each gallery was created). A gallery with no shoot date uses the day it was created. Featured galleries keep the positions you picked, and My galleries was already newest first.
